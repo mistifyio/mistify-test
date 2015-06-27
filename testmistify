@@ -1,0 +1,528 @@
+#!/bin/bash
+#+
+# Use this script to run verification tests against Mistify-OS.
+#
+#-
+
+source scripts/mistify-test-functions.sh
+
+usage () {
+    cat << EOF
+Usage: $0 [options] [-- test suite options]
+  Use this script to run tests to verify the build of an instance of the
+  Mistify-OS and its behavior either in a VM or on a target platform.
+
+  NOTE: This script uses the Robot Framework (http://robotframework.org)
+  utility, pybot, to run test cases.
+
+  Options:
+    ==== System Under Test ====
+    --mistifyosdir <dir>
+        Where the clone of the "mistify-os" repository resides. This is used to
+        determine which options were used to for the most recent build of
+        Mistify-OS using the options saved in the ".buildmistify" state directory.
+        This option is saved in the file:
+        $testmistifystatedir/mistifyosdir
+        [mistifyosdir=$mistifyosdir]
+    --builddir <dir>
+        The path to the directory where Mistify-OS was built (see buildmistify).
+        This option is passed to the test suites on the command line in the
+        variable BUILDDIR and defaults to the most recent build.
+        This option is saved in the file:
+        $testmistifystatedir/builddir
+        [builddir=$builddir]
+    --mistifyosversion <version>
+        Use this version of Mistify-OS. This determines the version of Mistify-OS
+        to build or test against.
+        This option is saved in the file:
+        $testmistifystatedir/mistifyosversion
+        [mistifyosversion=$mistifyosversion]
+    --buildrootversion <version>
+        The version of Buildroot to use and can be a branch, tag or a commit ID.
+        This option is passed to the test suites on the command line in the
+        variable BUILDROOTVERSION and defaults to the version used for the most
+        recent build (see buildmistify). This option is saved in the file:
+        $testmistifystatedir/buildrootversion
+        [buildrootversion=$buildrootversion]
+    --toolchainversion <version>
+        The version of the toolchain to use and can be a branch, tag or a commit
+        ID. This option is passed to the test suites on the command line in the
+        variable TOOLCHAINVERSION and defaults to the version used for the most
+        recent build (see buildmistify). This option is saved in the file:
+        $testmistifystatedir/toolchainversion
+        [toolchainversion=$toolchainversion]
+    --goversion <version>
+        The version to use when fetching the GO source code from the repository.
+        This is saved in the file $testmistifystatedir/goversion.
+        [goversion=$goversion]
+    ==== Test Environment ====
+    --testlibdir <dir>
+        Where the test case and test suite library resides. This option is saved
+        in the file:
+        $testmistifystatedir/testlibdir
+        [testlibdir=$testlibdir]
+    --testbeddir <dir>
+        Where the test bed definitions are stored. This option is saved in the
+        file: $testmistifystatedir/testbeddir
+        [testbeddir=$testbeddir]
+    --testbed <name>
+        The environment in which to test Mistify-OS. This can be a hardware
+        platform or a virtual machine. This option is saved in the file:
+        $testmistifystatedir/testbed
+        [testbed=$testbed]
+    ==== Build Testing Options ====
+    --testdistrodir <dir>
+        Mistify-OS build verification is performed using a Linux Container (lxc)
+        constructed specifically for the test. The container can be based upon
+        one of a set of possible Linux distributions which are defined in distro
+        definition files. This defines the location of the distro definition file
+        to use for this test run. This option is saved in the file:
+        $testmistifystatedir/testdistrodir
+        [testdistrodir=$testdistrodir]
+    --testdistro <distro>
+        This is the distro definition file to use for a test build run. This
+        option is saved in the file:
+        $testmistifystatedir/testdistro
+        [testdistro=$testdistro]
+    ==== Test Execution ====
+    --testsuitedir <dir>
+        The directory where the test suites reside. This option is saved in the
+        file: $testmistifystatedir/testsuitedir
+        [testsuitedir=$testsuitedir]
+    --testsuite <testsuite>
+        The test suite to execute. A test suite is comprised of a number of
+        symlinks in a directory. The symlinks are expected to point to testcases
+        typically in the test case directory. This option is saved in the file:
+        $testmistifystatedir/testsuite.
+        [testsuite=$testsuite]
+    --testcase <testcase>
+        Execute only a single test case.
+        The "testsuite" option is ignored when this option is used.
+        This option is NOT saved.
+    --exitonfailure
+        This option is used to stop test execution on the first failure. Test
+        teardown is still executed.
+        This option is NOT saved.
+    --testtag <tag>
+        Run only test cases having this tag. This option is NOT saved.
+    --testlogdir <dir>
+        Where to put the test log relative to the build directory.
+        This option is saved in the file:
+        $testmistifystatedir/testlogdir
+        [testlogdir=$testlogdir]
+    -- <pybotoptions>
+        Anything following the "--" is passed directly to Robot Framework (pybot).
+        Most often this is used to pass variables on the command line which are
+        specific to a given test. e.g. "-v VAR:varvalue"
+    ==== other ====
+    --resetdefaults
+        Reset options back to their default values.
+    --verbose
+        Verbose output from this script.
+    --dryrun
+        Just showing what will happen with this script. Don't run the test.
+    --alwaysok
+        Return 0 always. Some CI tools have a Robot Framework plugin
+        which requires that a 0 return code always be returned after executing
+        tests whether they fail or not. This is so the CI tool won't stop the
+        run before the plugin has an opportunity to process the test results.
+    -h|--help
+        Display this usage.
+
+    ==== Variables Passed On the Command Line ====
+    PWD = The current directory.
+    [$PWD]
+    USER = The current user as indicated in the \$USER environment variable.
+    [$USER]
+    HOME = The current user's home directory as indicated in the \$HOME
+        environment variable.
+    [$HOME]
+    MISTIFYOSDIR = The path to the clone of the "mistify-os" repo.
+    [$mistifyosdir]
+    MISTIFYOSVERSION = The active Mistify-OS version as reported by git.
+    [$mistifyosversion]
+    BUILDROOTVERSION = The version of buildroot to pass to the test suites. This
+        is used to modify test case behavior based upon the version of Buildroot.
+    [$buildrootversion]
+    TOOLCHAINVERSION = The version of the toolchain to pass to the test suites.
+        This is used to modify test case behavior based upon the version of the
+        toolchain used to build Mistify-OS.
+    [$toolchainversion]
+    GOVERSION = The version of Go to build. This is used to modify test case
+	behavior based upon the version of Go.
+    [$goversion]
+    BUILDDIR = The directory in which Mistify-OS was built. Test cases can use
+        this to test against different builds of the Mistify-OS.
+    [$builddir]
+    TESTLIBDIR = The path to the test script library.
+    [$testlibdir]
+    TESTDISTRO = The path to the description of the Linux distribution used
+	for container based testing. The test container is initialized using
+	this distribution (see mistify.robot).
+    [$testdistro]
+    TESTBED = The path to the file which describes the environment in which to
+        test.
+    [$testbed]
+    These can be overridden on the command line using the "-v" option mentioned
+    next.
+
+    ==== Test Suite Options ====
+    --  Any options following "--" on the commnand line are passed to pybot.
+        Read the Robot Framework documentation for a list of available options.
+        Of particular interest is the "-v" option which can be used to pass
+        variables to test cases.
+
+  NOTE: This script maintains state in:
+  $testmistifystatedir.
+EOF
+}
+
+#+
+# Handle the command line options.
+#-
+a=`getopt -l "\
+mistifyosdir:,\
+builddir:,\
+mistifyosversion:,\
+buildrootversion:,\
+toolchainversion:,\
+goversion:,\
+testlibdir:,\
+testbeddir:,\
+testbed:,\
+testdistrodir:,\
+testdistro:,\
+testsuitedir:,\
+testsuite:,\
+testcase:,\
+exitonfailure,\
+testtag:,\
+testlogdir:,\
+resetdefaults,\
+verbose,\
+dryrun,\
+alwaysok,\
+help" \
+   -o "h" -- "$@"`
+
+if [ $? -gt 0 ]; then
+    usage
+    exit 1
+fi
+
+eval set -- $a
+
+while [ $# -ge 1 ]; do
+    case "$1" in
+	--)
+	    shift
+	    verbose Passing additional options to pybot: $@
+	    break
+	    ;;
+	--mistifyosdir)
+	    mistifyosdir=$2
+	    shift
+	    ;;
+	--builddir)
+	    builddir=$2
+	    shift
+	    ;;
+	--mistifyosversion)
+	    mistifyosversion=$2
+	    shift
+	    ;;
+	--buildrootversion)
+	    buildrootversion=$2
+	    shift
+	    ;;
+	--toolchainversion)
+	    toolchainversion=$2
+	    shift
+	    ;;
+	--goversion)
+	    goversion=$2
+	    shift
+	    ;;
+	--testlibdir)
+	    testlibdir=$2
+	    shift
+	    ;;
+	--testbeddir)
+	    testbeddir=$2
+	    shift
+	    ;;
+	--testbed)
+	    testbed=$2
+	    shift
+	    ;;
+	--testdistrodir)
+	    testdistrodir=$2
+	    shift
+	    ;;
+	--testdistro)
+	    testdistro=$2
+	    shift
+	    ;;
+	--testsuite)
+	    testsuite=$2
+	    shift
+	    ;;
+	--testsuitedir)
+	    testsuitedir=$2
+	    shift
+	    ;;
+	--testcase)
+	    testcase=$2
+	    shift
+	    ;;
+	--exitonfailure)
+	    exitonfailure=y
+	    ;;
+	--testtag)
+	    testtag=$2
+	    shift
+	    ;;
+	--testlogdir)
+	    testlogdir=$2
+	    shift
+	    ;;
+	--resetdefaults)
+	    resetdefaults=y
+	    ;;
+	--verbose)
+	    verbose=y
+	    ;;
+	--dryrun)
+	    dryrun=echo
+	    ;;
+	--alwaysok)
+	    alwaysok=y
+	    ;;
+	-h|--help)
+	    showusage=y
+	    ;;
+	# using getopt should avoid needing this catchall but just in case...
+	*)
+	    error "Invalid option: $1"
+	    showusage=y
+	    errorexit=y
+	    ;;
+    esac
+    shift
+done
+
+if [ ! -d $testmistifystatedir ]; then
+    verbose Creating the state directory: $testmistifystatedir
+    mkdir -p $testmistifystatedir
+fi
+
+
+# Where buildmistify settings are maintained.
+if [ -z "$mistifyosdir" ]; then
+    mistifyosdir=$(get_test_default mistifyosdir ../mistify-os)
+fi
+verbose Mistify-OS directory: $mistifyosdir
+set_test_default mistifyosdir $mistifyosdir
+
+buildmistifystatedir=$mistifyosdir/.buildmistify
+
+statevars=(
+    builddir\;$(get_build_default $buildmistifystatedir \
+		    variantbuilddir $mistifyosdir/build/mistify/base)
+    mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
+    buildrootversion\;$(get_build_default $buildmistifystatedir \
+		    buildrootversion master)
+    toolchainversion\;$(get_build_default $buildmistifystatedir \
+		    toolchainversion crosstool-ng-1.21.0)
+    goversion\;$(get_build_default $buildmistifystatedir \
+		    gotag master)
+    testlibdir\;$(get_test_default testlibdir testlib)
+    testbeddir\;$(get_test_default testbeddir \
+	$(get_test_default testlibdir testlib)/testbeds)
+    testbed\;$(get_test_default testbed labrat.robot)
+    testdistrodir\;$(get_test_default testdistrodir \
+	$(get_test_default testlibdir testlib)/distros)
+    testdistro\;$(get_test_default testdistro ubuntu-trusty-amd64.robot)
+    testsuitedir\;$(get_test_default testsuitedir \
+	$(get_test_default testlibdir testlib)/testsuites)
+    testsuite\;$(get_test_default testsuite defaulttests)
+    testlogdir\;$(get_test_default testlogdir testlogs)
+)
+for v in "${statevars[@]}"
+do
+    if [ ! -z "$resetdefaults" ]; then
+	clear_test_variable $v
+    fi
+    init_test_variable $v
+done
+
+which pybot
+if [ $? -gt 0 ]; then
+    usage
+    error Robot Framework is not installed.
+    tip https://github.com/robotframework/robotframework/blob/master/INSTALL.rst
+    tip pip install robotframework
+    tip Also install the SSH library:
+    tip https://github.com/robotframework/SSHLibrary
+    tip pip install robotframework-sshlibrary
+    exit 1
+fi
+pip list | grep "robotframework-sshlibrary " >/dev/null
+if [ $? -gt 0 ]; then
+    usage
+    error Robot Framework SSH library is not installed.
+    tip https://github.com/robotframework/SSHLibrary
+    tip pip install robotframework-sshlibrary
+    exit 1
+fi
+
+if [ ! -z "$showusage" ]; then
+    usage
+    if [ ! -z "$errorexit" ]; then
+      exit 1
+    fi
+    exit 0
+fi
+
+#####
+#+
+# TODO: It's a real possibility that a user will want to run a test against
+# a running system which doesn't have a corresponding build (at least locally).
+# This means that user will want to skip all this builddir and variant stuff.
+# However, that can only be a subset of the available tests. Obviously, tests
+# which verify the build itself can't be run.
+# This creates an orginization problem for test cases. It's likely TAGs will
+# need to be employeed to specify the class of test cases to run.
+# This raises other questions such as where to put test logs if no build.
+#-
+if [ -d "$builddir" ]; then
+    message "Testing the build in $builddir"
+else
+    warning "The build directory $builddir does not exist."
+fi
+
+if [ -d "$testlibdir" ]; then
+    verbose "Using test library located in: $testlibdir"
+else
+    die "Test library $testlibdir does not exist"
+fi
+
+if [ -d "$testbeddir" ]; then
+    verbose "Using test bed directory in: $testbeddir"
+else
+    die "Test bed definition directory $testbeddir does not exist"
+fi
+
+if [ -f "$testbeddir/$testbed" ]; then
+    verbose "Using test bed defintion: $testbed"
+else
+    die "Test bed definition $testbed does not exist"
+fi
+
+if [ -d "$testdistrodir" ]; then
+    verbose "Using test distro directory in: $testdistrodir"
+else
+    die "Test distro definition directory $testdistrodir does not exist"
+fi
+
+if [ -f "$testdistrodir/$testdistro" ]; then
+    verbose "Using test distro definition: $testdistro"
+else
+    die "Test distro definition $testdistro does not exist"
+fi
+
+if [ -d "$testsuitedir" ]; then
+    verbose "Using test suite directory in: $testsuitedir"
+else
+    die "Test suite definition directory $testsuitedir does not exist"
+fi
+
+if [ -d "$testsuitedir/$testsuite" ]; then
+    tests=$testsuitedir/$testsuite
+    verbose "Using test suite: $testsuitedir/$testsuite"
+else
+    die "Test suite $testsuitedir/$testsuite does not exist"
+fi
+
+#####
+if [ -n "$testcase" ]; then
+    if [ -e $testcase ]; then
+        tests=$testlibdir/$testcase
+        verbose "Running $testcase ($testsuite ignored)"
+    else
+        die "Test case $testcase does not exist"
+    fi
+fi
+
+#####
+
+verbose "Creating the testlog directory if it doesn't exist."
+$dryrun mkdir -p $testlogdir
+if [ $? -gt 0 ]; then
+    die Could not create the test log directory.
+fi
+
+#####
+verbose "Running test(s): $tests"
+
+#+
+# TODO: Verify Robot Framework is properly installed and if not install it.
+# TODO: Also need to install in a virtual python environment.
+#-
+
+if [[ "$verbose" == "y" ]]; then
+    verboseoption="-L DEBUG:INFO"
+fi
+
+if [ -n "$testtag" ]; then
+  pybotoptions+=" --include $testtag"
+fi
+
+if [ -n "$exitonfailure" ]; then
+  pybotoptions+=" --exitonfailure"
+fi
+
+verbose Setting MISTIFYOSDIR to $mistifyosdir
+verbose Setting MISTIFYOSVERSION to $mistifyosversion
+verbose Setting BUILDROOTVERSION to $buildrootversion
+verbose Setting TOOLCHAINVERSION to $toolchainversion
+verbose Setting GOVERSION to $goversion
+verbose Setting BUILDDIR to $builddir
+verbose Setting TESTLIBDIR to $testlibdir
+verbose Setting TESTDISTRO to $testdistrodir/$testdistro
+verbose Setting TESTBED to $tesetbeddir/$testbed
+verbose Setting USER to $USER
+verbose Setting HOME to $HOME
+
+mkdir -p $testlogdir
+pybotcommand="pybot $verboseoption -d $testlogdir \
+    -v PWD:`pwd` \
+    -v MISTIFYOSDIR:$mistifyosdir \
+    -v MISTIFYOSVERSION:$mistifyversion \
+    -v BUILDROOTVERSION:$buildrootversion \
+    -v TOOLCHAINVERSION:$toolchainversion \
+    -v GOVERSION:$goversion \
+    -v BUILDDIR:$builddir \
+    -v TESTLIBDIR:$testlibdir \
+    -v TESTDISTRO:$testdistrodir/$testdistro \
+    -v TESTBED:$testbeddir/$testbed \
+    -v USER:$USER \
+    -v HOME:$HOME \
+    $pybotoptions \
+    $@ $tests"
+verbose "Command is: $pybotcommand"
+
+if [ -n "$dryrun" ]; then
+    message "Just a dry run -- not running tests."
+fi
+
+message "Running test case(s): $target"
+$dryrun $pybotcommand
+if [ $? -gt 0 ]; then
+    error "One or more test cases failed."
+    if [ -n "$alwaysok" ]; then
+        message Returning OK regardless of test results.
+        exit 0
+    fi
+    exit 1
+fi

@@ -1,0 +1,256 @@
+#!/usr/bin/env bash
+#+
+# This script is designed to run on the primary node of a Mistify-OS cluster
+# and initializes the cluster based upon the information contained in nodes.sh.
+#-
+if [ "$1" == "debug" ]; then
+	debug=y
+fi
+
+set -e
+
+function msg() {
+	logger -st cluster-init-out "$@"
+}
+function err() {
+	logger -st cluster-init-err "$@"
+}
+
+exec 1> >(msg)
+exec 2> >(err)
+
+#+
+# Load the node configuration information.
+#-
+source ./nodes.sh
+
+function do_until() {
+	local t=$1
+	local cmd=$2
+	shift 2
+	local i=0
+	until $cmd "$@"; do
+		sleep $t
+		msg "$((++i * $t))s elapsed"
+	done
+}
+
+function pause() {
+	if [[ "$debug" == "y" ]]; then
+		echo $1
+		read -p "Press [Enter] to continue..."
+	fi
+}
+
+function poke_around() {
+	echo $1
+	if [[ "$debug" == "y" ]]; then
+		echo "Entering another shell -- ^D to continue."
+		bash
+	fi
+}
+
+function run() {
+	if [[ "$debug" == "y" ]]; then
+		echo $@
+	fi
+	$@
+}
+
+# The primary node is the first in the list.
+ip=${ips[0]}
+nm=24
+
+
+poke_around "$LINENO: stopping kappa to avoid races"
+run systemctl stop kappa
+poke_around "$LINENO: done"
+
+poke_around "Verify kappa is not running."
+
+poke_around "$LINENO: setting up etcd keys"
+run etcdctl set /lochness/hypervisors/${uuids[0]}/config/dhcpd true
+run etcdctl set /lochness/hypervisors/${uuids[0]}/config/dns true
+run etcdctl set /lochness/hypervisors/${uuids[0]}/config/enfield true
+run etcdctl set /lochness/hypervisors/${uuids[0]}/config/etcd true
+# etcdctl set /lochness/hypervisors/${uuids[0]}/config/tftpd true
+
+run etcdctl set /lochness/hypervisors/${uuids[1]}/config/dns true
+run etcdctl set /lochness/hypervisors/${uuids[1]}/config/etcd true
+run etcdctl set /lochness/hypervisors/${uuids[2]}/config/dns true
+run etcdctl set /lochness/hypervisors/${uuids[2]}/config/etcd true
+poke_around "$LINENO: done"
+
+poke_around "About to reconfigure network."
+
+poke_around "$LINENO: setting up network"
+cat > /etc/systemd/network/${ifs[0]}.network <<EOF
+[Match]
+Name=${ifs[0]}
+
+[Network]
+DNS=127.0.0.1
+Address=$ip/$nm
+# needs to be 192.168.0 subnet
+Gateway=$gw
+EOF
+
+cat > /etc/systemd/network/ethernet.network <<EOF
+[Match]
+Name=en*
+
+[Network]
+Bridge=${ifs[0]}
+EOF
+
+cat > /etc/resolv.conf <<EOF
+nameserver 127.0.0.1
+EOF
+
+poke_around "Take a look at the network configs in /etc/systemd/network"
+
+# TODO: ??? ens3 ???
+systemctl restart systemd-networkd || :
+poke_around "$LINENO: done"
+
+poke_around "Verify network configuration."
+
+poke_around "$LINENO: ensuring kappa has started and getting its pid"
+run systemctl start kappa
+run sleep 2
+kappapid=$(pidof kappa)
+poke_around "$LINENO: kappa has a pid of:$kappapid"
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: waiting for kappa/ansible"
+do_until 1 test -d /proc/$kappapid
+# port 15353 is queensland
+dig +short dns.services.lochness.local @127.0.0.1 -p 15353 || \
+  poke_around "$LINENO: ok well that failed, but lets continue anyway"
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: setting up etcd to listen on external interfaces"
+cat > /etc/sysconfig/etcd <<EOF
+# curl etcd port to verify running
+ETCD_LISTEN_CLIENT_URLS=http://$ip:2379,http://$ip:4001,http://localhost:2379,http://localhost:4001
+EOF
+run systemctl restart etcd
+run sleep .100
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: waiting for etcd to come back fully"
+do_until 1 etcdctl cluster-health
+poke_around "$LINENO: done"
+poke_around "$LINENO: setting up other nodes in etcd"
+stop=$((${#uuids[*]} - 1))
+for i in $(seq 0 $stop); do
+	echo "${uuids[$i]}"
+	run etcdctl set /lochness/hypervisors/${uuids[$i]}/config/etcd true
+	cat <<-EOF | tr -d '\n' | etcdctl set /lochness/hypervisors/${uuids[$i]}/metadata
+	{"id":"${uuids[$i]}","ip":"${ips[$i]}","netmask":"255.255.255.0","gateway":"$gw","mac":"${macs[$i]}"}
+	EOF
+	cat <<-EOF | tr -d '\n' | etcdctl set /queensland/nodes/${uuids[$i]}
+	{"ip":"${ips[$i]}"}
+	EOF
+	cat <<-EOF | tr -d '\n' | etcdctl set /queensland/services/etcd-server/${uuids[$i]}
+	{"priority":0,"weight":0,"port":2380,"target":"${uuids[$i]}"}
+	EOF
+done
+poke_around "$LINENO: done"
+
+# really don't need kappa running -- but verify kappa is picking up the changes.
+poke_around "$LINENO: waiting for kappa to process new nodes, then stopping kappa"
+journalctl -fu kappa.service | grep --line-buffered 'PLAY RECAP' | while read line; do
+	break
+done
+run systemctl stop kappa
+poke_around "$LINENO: done"
+
+poke_around  "Double check etcd."
+
+poke_around "$LINENO: waiting for etcd to come back fully"
+do_until 1 etcdctl cluster-health
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: setting up etcd cluster"
+run etcdctl set /lochness/config/ETCD_DISCOVERY_SRV 'services.lochness.local'
+run etcdctl set /lochness/config/ETCD_INITIAL_CLUSTER_STATE 'new'
+run etcdctl set /lochness/config/ETCD_INITIAL_CLUSTER_TOKEN 'etcd-cluster-1'
+for i in $(seq 0 $stop)
+do
+	path="/lochness/hypervisors/${uuids[$i]}/config"
+	echo "$path"
+	run etcdctl set $path/KAPPA_ETCD_ADDRESS http://$ip:4001
+	run etcdctl set $path/ETCD_ADVERTISE_CLIENT_URLS "http://${uuids[$i]}.nodes.lochness.local:2379,http://${uuids[$i]}.nodes.lochness.local:4001"
+	run etcdctl set $path/ETCD_INITIAL_ADVERTISE_PEER_URLS "http://${uuids[$i]}.nodes.lochness.local:2380"
+	run etcdctl set $path/ETCD_LISTEN_CLIENT_URLS "http://${uuids[$i]}.nodes.lochness.local:2379,http://${uuids[$i]}.nodes.lochness.local:4001,http://localhost:2379,http://localhost:4001"
+	run etcdctl set $path/ETCD_LISTEN_PEER_URLS "http://${uuids[$i]}.nodes.lochness.local:2380"
+	run etcdctl set $path/ETCD_NAME "${uuids[$i]}"
+done
+poke_around "$LINENO: done"
+
+# if not doing network boot this is not needed.
+#poke_around "$LINENO: checking for kernel/initrd existence"
+# do_until 5 ls -l /var/lib/images/0.1.0/{vmlinuz,initrd}
+#poke_around "$LINENO: done"
+
+# start nodes from separate console
+poke_around "$LINENO: ok you can now boot node1 and node2"
+do_until 5 curl --silent http://${ips[1]}:4001/v2/keys
+poke_around "$LINENO: ok new etcd cluster seems to be up"
+
+poke_around "$LINENO: sleeping 10s to let new nodes settle"
+run sleep 10
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: syncing queensland data from old cluster to new"
+etcdctl ls --recursive --sort -p /queensland | sed '/\/$/ d' | \
+while read key; do
+	etcdctl get $key | sed 's|^|value=|' | curl -s -XPUT http://${ips[1]}:4001/v2/keys$key -d@-
+done
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: setting hv1 to be dns server (temporarily)"
+curl -s -XPUT http://${ips[1]}:4001/v2/keys/lochness/hypervisors/${uuids[1]}/config/dns -dvalue=true
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: backing up etcd data"
+etcdctl ls --sort --recursive -p | sed '/\/$/ d' | while read key; do
+	printf "%s %s\n" "$(printf $key | base64 -w0)" "$(base64 -w0 <(etcdctl get $key))"
+done > /tmp/etcd.dump
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: waiting for other dns server to come up"
+do_until 5 dig +short dns.services.lochness.local @${ips[1]}
+echo "done"
+
+poke_around "$LINENO: restarting etcd so it can join the cluster"
+cat /dev/null > /etc/default/etcd
+# enfield
+curl -s http://localhost:8888/config/$ip > /tmp/mistify-config
+cat > /etc/resolv.conf <<EOF
+nameserver ${ips[1]}
+nameserver ${ips[2]}
+nameserver ${ips[0]}
+EOF
+systemctl stop etcd confd named dhcpd enfield # tftpd
+run rm -rf /mistify/data/etcd/*
+run systemctl start etcd
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: waiting for etcd cluster to be healthy"
+do_until 5 etcdctl cluster-health
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: restoring etcd data"
+while read key value; do
+	echo $value | base64 -d | sed 's|^|value=|' | \
+		curl -s -XPUT "http://localhost:4001/v2/keys$(echo $key | base64 -d)" -d@-
+done < /tmp/etcd.dump
+poke_around "$LINENO: done"
+
+poke_around "$LINENO: restarting kappa so it can do its thing"
+run systemctl restart kappa
+poke_around "$LINENO: done"
+# verify with cluster-health
+echo "$LINENO: Cluster initialization is complete."

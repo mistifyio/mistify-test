@@ -1,0 +1,6 @@
+.*
+!.empty
+!.gitignore
+.testmistify
+testlogs
+tmp

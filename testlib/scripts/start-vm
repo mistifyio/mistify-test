@@ -1,0 +1,302 @@
+#!/bin/bash
+
+#+
+# This script starts a VM to run Mistify-OS.
+#
+# NOTE: This script is intended to be used as part of an automated test and
+# requires a network as setup by vm-network. This script is also intended to
+# be run from within an LXC container.
+#
+# NOTE: In order to start kvm on some systems it may be necessary to add
+# the user to the kvm group. e.g. sudo useradd <user> kvm
+# A clue this is necessary is when the following complaint occurs:
+#   Could not access KVM kernel module: Permisssion denied
+#-
+
+source scripts/mistify-test-functions.sh
+
+usage () {
+cat << EOF
+Usage: $0 [options]
+    Use this script to start a virtual machine running the Mistify-OS.
+
+    The default is to use images produced from the most recent build.
+
+    NOTE: To exist the OS use the ^A-X pattern.
+
+    Options:
+    ==== Mistify-OS ====
+    --mistifyimagedir <dir>
+        Where the Mistify-OS kernel and initrd images are stored.
+        This option is saved in the file:
+        $testmistifystatedir/mistifyimagedir
+        [mistifyimagedir = $mistifyimagedir]
+    --kernelimage <image>
+        The kernel image to boot into the VM. This image must be stored in
+        $mistifyimagedir.
+        This option is saved in the file:
+        $testmistifystatedir/kernelimage
+        [kernelimage = $kernelimage]
+    --initrdimage <image>
+        The RAM file system image (initrd) to boot into the VM. This image must
+        be stored in $mistifyimagedir.
+        This option is saved in the file:
+        $testmistifystatedir/initrdimage
+        [initrdimage = $initrdimage]
+    ==== Target Options ====
+    --diskimage
+        The name file to use for the test disk image. If the file doesn't exist
+        it is created. NOTE: The default is to create the image file in the
+        same directory as the kernel image which could have been created by a
+        different user. In this case either use a different directory or change
+        permissions.
+        This option is saved in the file:
+        $testmistifystatedir/diskimage
+        [diskimage = $diskimage]
+    --diskimagesize <size>
+        The size of the disk image to use. e.g. 1G = 1 gigabyte.
+        This option is saved in the file:
+        $testmistifystatedir/diskimagesize
+        [diskimagesize = $diskimagesize]
+    --uuid <uuid>
+        Use this to specify the UUID to associate with the Mistify-OS instance
+        running in the VM. To create a random UUID use \`uuidgen\` for this
+        option.
+        This option is saved in the file:
+        $testmistifystatedir/uuid
+        [uuid = $uuid]
+    ==== Network ====
+    --tap <tap>
+        The name of the tap interface. This uses the value set by the
+        vm-network script.
+        This option defaults to the interface created by the vm-network script.
+        [tap = $tap]
+    --mac <mac>
+        Use a specific MAC address for the network interface. The default is
+        to use a randomly generated MAC starting with DE:AD:BE:EF.
+        This option is saved in the file:
+        $testmistifystatedir/mac
+        [mac = $mac]
+    === Boot Options ===
+    --netboot
+        Add options for booting from the network. This uses the option rom image.
+        This option is saved in the file:
+        $testmistifystatedir/netboot
+        [netboot = $netboot]
+    --pxeoptionrom
+        The option ROM image to use for a network boot.
+        This option is saved in the file:
+        $testmistifystatedir/pxeoptionrom
+        [pxeoptionrom = $pxeoptionrom]
+    ==== Other ====
+    --resetdefaults
+        Reset options back to their default values.
+    --verbose
+        Enble verbose output from this script.
+    --dryrun
+        Just showing what will happen with this script. Don't run the test.
+   --help
+        Show this help information.
+EOF
+}
+
+#+
+# Handle the command line options.
+#-
+a=`getopt -l "\
+mistifyimagedir:,\
+kernelimage:,\
+initrdimage:,\
+diskimage:,\
+diskimagesize:,\
+uuid:,\
+tap:,\
+mac:,\
+pxeoptionrom:,\
+netboot,\
+resetdefaults,\
+verbose,\
+dryrun,\
+help" \
+   -o "h" -- "$@"`
+
+if [ $? -gt 0 ]; then
+    usage
+    exit 1
+fi
+
+eval set -- $a
+
+while [ $# -ge 1 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	--mistifyimagedir)
+	    mistifyimagedir=$2
+	    shift
+	    ;;
+	--kernelimage)
+	    kernelimage=$2
+	    shift
+	    ;;
+	--initrdimage)
+	    initrdimage=$2
+	    shift
+	    ;;
+	--diskimage)
+	    diskimage=$2
+	    shift
+	    ;;
+	--diskimagesize)
+	    diskimagesize=$2
+	    shift
+	    ;;
+	--uuid)
+	    uuid=$2
+	    shift
+	    ;;
+	--tap)
+	    tap=$2
+	    shift
+	    ;;
+	--mac)
+	    mac=$2
+	    shift
+	    ;;
+	--pxeoptionrom)
+	    pxeoptionrom=$2
+	    shift
+	    ;;
+	--netboot)
+	    netboot=y
+	    ;;
+	--resetdefaults)
+	    resetdefaults=y
+	    ;;
+	--verbose)
+	    verbose=y
+	    ;;
+	--dryrun)
+	    dryrun=echo
+	    ;;
+	-h|--help)
+	    showusage=y
+	    ;;
+	# using getopt should avoid needing this catchall but just in case...
+	*)
+	    error "Invalid option: $1"
+	    showusage=y
+	    errorexit=y
+	    ;;
+    esac
+    shift
+done
+
+statevars=(
+    mistifyimagedir\;images
+    kernelimage\;images/bzImage.mistify
+    initrdimage\;images/initrd.mistify
+    diskimage\;images/sas1.img
+    diskimagesize\;1G
+    uuid\;`uuidgen`
+    tap\;tap0
+    mac\;DE:AD:BE:EF:`printf "%02X:%02X" $(( (RANDOM % 256) )) $(( (RANDOM % 256) ))`
+    pxeoptionrom\;/usr/share/qemu/pxe-virtio.rom
+    netboot\;''
+)
+for v in "${statevars[@]}"
+do
+    if [ ! -z "$resetdefaults" ]; then
+	clear_test_variable $v
+    fi
+    init_test_variable $v
+done
+
+if [ ! -z "$showusage" ]; then
+    usage
+    if [ ! -z "$errorexit" ]; then
+      exit 1
+    fi
+    exit 0
+fi
+
+message Mistify-OS image directory is: $mistifyimagedir
+
+if [ ! -d "$mistifyimagedir" ]; then
+    die "The target image directory doesn't exist."
+fi
+
+verbose The disk image is: $diskimage
+verbose The disk image size is: $diskimagesize
+verbose The instance UUID is: $uuid
+verbose TAP device is: $tap
+verbose The VM MAC address is: $mac
+
+if [ ! -f $kernel ]; then
+    # It's also possible a symlink is used to point to the kernel.
+    if [ ! -h $kernel ]; then
+	die Kernel image $kernel does not exist.
+    fi
+fi
+verbose The kernel image is: $kernel
+
+if [ ! -f $initrd ]; then
+    # It's also possible a symlink is used to point to the initrd.
+    if [ ! -h $initrd ]; then
+	die Initrd image $initrd does not exist.
+    fi
+fi
+verbose The initrd image is: $initrd
+
+if [ ! -e "$diskimage" ]; then
+    warning "Disk image doesn't exist."
+    warning "Creating $diskimage"
+    if [ -n "$dryrun" ]; then
+	message Will create $diskimage of size $diskimagesize
+    else
+	mkdir -p $(dirname $diskimage)
+	qemu-img create -f raw -o size=$diskimagesize $diskimage
+    fi
+    if [ $? -gt 0 ]; then
+	die Error when attempting to create the disk image: $diskimage
+    fi
+fi
+verbose The test disk image is: $diskimage
+
+if [ -z "$pxeoptionrom" ]; then
+    pxeoptionrom=$pxeoptionromdefault
+fi
+verbose The PXE boot option ROM is: $pxeoptionrom
+
+if [ -z "$netboot" ]; then
+    netboot=$netbootdefault
+fi
+
+if [ "$netboot" == "y" ]; then
+	verbose Enabling netboot of the VM.
+	if [ -f $pxeoptionrom ]; then
+	    netbootoptions=-option-rom $pxeoptionrom -boot n
+	else
+	    die "The option ROM image, $pxeoptionrom, doesn't exist."
+	fi
+fi
+
+if [ -n "$dryrun" ]; then
+  message "Just a dry run -- not running tests."
+fi
+
+tip "Starting virtual machine (remember ^A-X to exit)."
+$dryrun kvm \
+$netbootoptions \
+-kernel $kernelimage \
+-initrd $initrdimage \
+-drive if=virtio,file=$diskimage \
+-machine accel=kvm -cpu host -smp 2 \
+-uuid $uuid \
+-global isa-fdc.driveA= \
+-append 'noapic acpi=off ramdisk_size=200000 rw console=ttyS0 zfs=auto' \
+-nographic -m 2048 \
+-device e1000,netdev=net0,mac=$mac \
+-netdev tap,ifname=$tap,id=net0,script=no
