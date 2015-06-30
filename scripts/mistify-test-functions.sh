@@ -1,6 +1,7 @@
 #+
 # Some standard functions for Mistify-OS scripts.
 #-
+cmdline="$0 $*"
 projectdir=$PWD	# Save this directory for later.
 
 testmistifystatedir=$projectdir/.testmistify
@@ -73,6 +74,7 @@ function init_test_variable() {
       d=$2
     fi
     e=(`echo $1 | tr $d " "`)
+    verbose ""
     verbose State variable default: "${e[0]} = ${e[1]}"
     eval val=\$${e[0]}
     if [ -z "$val" ]; then
@@ -81,7 +83,6 @@ function init_test_variable() {
     fi
     eval val=\$${e[0]}
     verbose "State variable: ${e[0]} = $val"
-    verbose ""
     verbose Saving current settings.
     set_test_default ${e[0]} $val
 }
@@ -149,6 +150,11 @@ verbose () {
     if [[ "$verbose" == "y" ]]; then
 	echo >&2 -e "$lightblue$id$nc: $*"
     fi
+}
+
+log () {
+    echo $* >>$testlogdir/$testlog
+    verbose "$*"
 }
 
 function die() {

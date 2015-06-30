@@ -84,6 +84,12 @@ Usage: $0 [options] [-- test suite options]
         option is saved in the file:
         $testmistifystatedir/testdistro
         [testdistro=$testdistro]
+    --containerid <id>
+        An ID which can be used to make containers based upon the same distro
+        unique. The test scripts append this to the end of a container name
+        when creating or using a container. This option is saved in the file:
+        $testmistifystatedir/containerid
+        [containerid=$containerid]
     ==== Test Execution ====
     --testsuitedir <dir>
         The directory where the test suites reside. This option is saved in the
@@ -96,7 +102,7 @@ Usage: $0 [options] [-- test suite options]
         $testmistifystatedir/testsuite.
         [testsuite=$testsuite]
     --testcase <testcase>
-        Execute only a single test case.
+        Execute only a single test case. This points to the test case file.
         The "testsuite" option is ignored when this option is used.
         This option is NOT saved.
     --exitonfailure
@@ -157,9 +163,12 @@ Usage: $0 [options] [-- test suite options]
     TESTLIBDIR = The path to the test script library.
     [$testlibdir]
     TESTDISTRO = The path to the description of the Linux distribution used
-	for container based testing. The test container is initialized using
-	this distribution (see mistify.robot).
+        for container based testing. The test container is initialized using
+        this distribution (see mistify.robot).
     [$testdistro]
+    CONTAINER_ID = An ID which is appended to a container name to help ensure
+        Containers based upon the same distro have unique names.
+    [$containerid]
     TESTBED = The path to the file which describes the environment in which to
         test.
     [$testbed]
@@ -192,6 +201,7 @@ testbeddir:,\
 testbed:,\
 testdistrodir:,\
 testdistro:,\
+containerid:,\
 testsuitedir:,\
 testsuite:,\
 testcase:,\
@@ -261,6 +271,10 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--testdistro)
 	    testdistro=$2
+	    shift
+	    ;;
+	--containerid)
+	    containerid=$2
 	    shift
 	    ;;
 	--testsuite)
@@ -343,10 +357,12 @@ statevars=(
     testdistrodir\;$(get_test_default testdistrodir \
 	$(get_test_default testlibdir testlib)/distros)
     testdistro\;$(get_test_default testdistro ubuntu-trusty-amd64.robot)
+    containerid\;$(get_test_default containerid -test)
     testsuitedir\;$(get_test_default testsuitedir \
 	$(get_test_default testlibdir testlib)/testsuites)
     testsuite\;$(get_test_default testsuite defaulttests)
     testlogdir\;$(get_test_default testlogdir testlogs)
+    testlog\;testmistify.log
 )
 for v in "${statevars[@]}"
 do
@@ -385,6 +401,16 @@ if [ ! -z "$showusage" ]; then
 fi
 
 #####
+
+verbose "Creating the testlog directory if it doesn't exist."
+$dryrun mkdir -p $testlogdir
+$dryrun echo Test run: `date` >$testlogdir/$testlog
+if [ $? -gt 0 ]; then
+    die Could not create the test log directory.
+fi
+log "Command line: $cmdline"
+
+#####
 #+
 # TODO: It's a real possibility that a user will want to run a test against
 # a running system which doesn't have a corresponding build (at least locally).
@@ -402,44 +428,44 @@ else
 fi
 
 if [ -d "$testlibdir" ]; then
-    verbose "Using test library located in: $testlibdir"
+    log "Using test library located in: $testlibdir"
 else
     die "Test library $testlibdir does not exist"
 fi
 
 if [ -d "$testbeddir" ]; then
-    verbose "Using test bed directory in: $testbeddir"
+    log "Using test bed directory in: $testbeddir"
 else
     die "Test bed definition directory $testbeddir does not exist"
 fi
 
 if [ -f "$testbeddir/$testbed" ]; then
-    verbose "Using test bed defintion: $testbed"
+    log "Using test bed defintion: $testbed"
 else
     die "Test bed definition $testbed does not exist"
 fi
 
 if [ -d "$testdistrodir" ]; then
-    verbose "Using test distro directory in: $testdistrodir"
+    log "Using test distro directory in: $testdistrodir"
 else
     die "Test distro definition directory $testdistrodir does not exist"
 fi
 
 if [ -f "$testdistrodir/$testdistro" ]; then
-    verbose "Using test distro definition: $testdistro"
+    log "Using test distro definition: $testdistro"
 else
     die "Test distro definition $testdistro does not exist"
 fi
 
 if [ -d "$testsuitedir" ]; then
-    verbose "Using test suite directory in: $testsuitedir"
+    log "Using test suite directory in: $testsuitedir"
 else
     die "Test suite definition directory $testsuitedir does not exist"
 fi
 
 if [ -d "$testsuitedir/$testsuite" ]; then
     tests=$testsuitedir/$testsuite
-    verbose "Using test suite: $testsuitedir/$testsuite"
+    log "Using test suite: $testsuitedir/$testsuite"
 else
     die "Test suite $testsuitedir/$testsuite does not exist"
 fi
@@ -447,23 +473,15 @@ fi
 #####
 if [ -n "$testcase" ]; then
     if [ -e $testcase ]; then
-        tests=$testlibdir/$testcase
-        verbose "Running $testcase ($testsuite ignored)"
+        tests=$testcase
+        log "Running $testcase ($testsuite ignored)"
     else
         die "Test case $testcase does not exist"
     fi
 fi
 
 #####
-
-verbose "Creating the testlog directory if it doesn't exist."
-$dryrun mkdir -p $testlogdir
-if [ $? -gt 0 ]; then
-    die Could not create the test log directory.
-fi
-
-#####
-verbose "Running test(s): $tests"
+log "Running test(s): $tests"
 
 #+
 # TODO: Verify Robot Framework is properly installed and if not install it.
@@ -482,19 +500,19 @@ if [ -n "$exitonfailure" ]; then
   pybotoptions+=" --exitonfailure"
 fi
 
-verbose Setting MISTIFYOSDIR to $mistifyosdir
-verbose Setting MISTIFYOSVERSION to $mistifyosversion
-verbose Setting BUILDROOTVERSION to $buildrootversion
-verbose Setting TOOLCHAINVERSION to $toolchainversion
-verbose Setting GOVERSION to $goversion
-verbose Setting BUILDDIR to $builddir
-verbose Setting TESTLIBDIR to $testlibdir
-verbose Setting TESTDISTRO to $testdistrodir/$testdistro
-verbose Setting TESTBED to $tesetbeddir/$testbed
-verbose Setting USER to $USER
-verbose Setting HOME to $HOME
+log Setting MISTIFYOSDIR to $mistifyosdir
+log Setting MISTIFYOSVERSION to $mistifyosversion
+log Setting BUILDROOTVERSION to $buildrootversion
+log Setting TOOLCHAINVERSION to $toolchainversion
+log Setting GOVERSION to $goversion
+log Setting BUILDDIR to $builddir
+log Setting TESTLIBDIR to $testlibdir
+log Setting TESTDISTRO to $testdistrodir/$testdistro
+log Setting CONTAINER_ID to $containerid
+log Setting TESTBED to $tesetbeddir/$testbed
+log Setting USER to $USER
+log Setting HOME to $HOME
 
-mkdir -p $testlogdir
 pybotcommand="pybot $verboseoption -d $testlogdir \
     -v PWD:`pwd` \
     -v MISTIFYOSDIR:$mistifyosdir \
@@ -505,12 +523,13 @@ pybotcommand="pybot $verboseoption -d $testlogdir \
     -v BUILDDIR:$builddir \
     -v TESTLIBDIR:$testlibdir \
     -v TESTDISTRO:$testdistrodir/$testdistro \
+    -v CONTAINER_ID:$containerid \
     -v TESTBED:$testbeddir/$testbed \
     -v USER:$USER \
     -v HOME:$HOME \
     $pybotoptions \
     $@ $tests"
-verbose "Command is: $pybotcommand"
+log "Command is: $pybotcommand"
 
 if [ -n "$dryrun" ]; then
     message "Just a dry run -- not running tests."
