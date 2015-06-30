@@ -8,6 +8,10 @@ Library	Collections
 ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 *** Keywords ***
+Log Output
+    [Arguments]  ${output}
+    Log To Console  \nConsole output: ${output}\n----
+
 SSH Run
     [Documentation]	This runs a command using an active ssh session and
     ...			ignores the output.
@@ -18,6 +22,7 @@ SSH Run
     ssh.Write  ${_command}
     # Consume all the output.
     ${_o}=  ssh.Read	delay=0.5s
+    Log Output  ${_o}
 
 SSH Run And Get Output
     [Documentation]	This runs a command using an active ssh session and
@@ -28,7 +33,21 @@ SSH Run And Get Output
     [Arguments]	${_command}
     ssh.Write  ${_command}
     ${_o}=  ssh.Read	delay=0.5s
+    Log Output  ${_o}
     [Return]  ${_o}
+
+SSH Run And Get First Line
+    [Documentation]	This runs a command using an active ssh session and
+    ...			returns the first line of the output.
+    ...
+    ...	The output is accumulated at .5 second intervals until no more output
+    ...	or a timeout occurs.
+    [Arguments]	${_command}
+    ssh.Write  ${_command}
+    ${_o}=  ssh.Read	delay=0.5s
+    Log Output  ${_o}
+    ${_l}=  Get Line  ${_o}  1
+    [Return]  ${_l}
 
 SSH Run And Get Return Code
     [Documentation]	This runs a command using an active ssh session and
@@ -41,6 +60,7 @@ SSH Run And Get Return Code
     ssh.Read	delay=0.5s
     ssh.Write  echo $?
     ${_o}=  ssh.Read	delay=0.5s
+    Log Output  ${_o}
     ${_l}=  Get Line  ${_o}  0
     [Return]  ${_l}
 
@@ -48,6 +68,7 @@ Consume Console Output
     [Documentation]     This consumes and ignores all the console output so
     ...			the next step can have a console which is in sync.
     ${_o}=  ssh.Read  delay=0.5s
+    Log Output  ${_o}
     [Return]  ${_o}
 
 Start Screen Session
@@ -70,6 +91,7 @@ Detach Screen
     ...	This is provided because of the funky control character handling.
     ...
     ...  NOTE: This assumes that the session is active.
+    Log To Console  \nDetaching from screen session.
     ${_c_a}=  Evaluate  chr(int(1))
     ssh.Write Bare  ${_c_a}d
 
@@ -133,49 +155,6 @@ Learn UUID
     ${_r}=  Get Line  ${_o}  -2
     [Return]  ${_r}
 
-Collect Attributes
-    [Documentation]	This collects the attributes of each of the running
-    ...			nodes and makes them available in a global collection.
-    ...
-    ...  NOTE: This requires different screen sessions for each of the nodes and
-    ...  each session is named after the node.
-    ...
-    ...  This creates a collection of collections. The top collection is used
-    ...  to access the individual node attributes and is keyed by node name.
-    ${Nodes}=	Create Dictionary  node  dictionary
-    :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
-      \  Attach Screen  ${_n}
-      \  Log To Console  \nCollecting attributes for node: ${_n}
-      \  ${_if}=  Learn Test Interface
-      \  Log To Console  \nNode ${_n} interface: ${_if}
-      \  ${_ip}=  Learn IP Address  ${_if}
-      \  Log To Console  \nNode ${_n} IP address: ${_ip}
-      \  ${_mac}=  Learn MAC Address  ${_if}
-      \  Log To Console  \nNode ${_n} MAC address: ${_mac}
-      \  ${_uuid}=  Learn UUID  ${_if}
-      \  Log To Console  \nNode ${_n} UUID: ${_uuid}
-      \  ${_a}=  Create Dictionary  uuid  ${_uuid}  if  ${_if}  ip  ${_ip}  mac  ${_mac}
-      \  Set To Dictionary  ${Nodes}  ${_n}  ${_a}
-      \  Detach Screen
-    Log Dictionary  ${Nodes}
-    Set Global Variable  ${Nodes}
-
-Get Node IP Address
-    [Documentation]	Returns a node's IP address from the Nodes attribute
-    ...			collection.
-    [Arguments]	${_node}
-    ${_a}=  Get From Dictionary  ${Nodes}  ${_node}
-    ${_r}=  Get From Dictionary  ${_a}  ip
-    [Return]  ${_r}
-
-Get Node UUID
-    [Documentation]	Returns a node's UUID from the Nodes attribute
-    ...			collection.
-    [Arguments]	${_node}
-    ${_a}=  Get From Dictionary  ${Nodes}  ${_node}
-    ${_r}=  Get From Dictionary  ${_a}  uuid
-    [Return]  ${_r}
-
 Login To Mistify
     [Documentation]	Login to Mistify using the current console.
 
@@ -194,60 +173,18 @@ Login To Mistify
     Should Contain  ${_o}  ${MISTIFY_PROMPT}
     ssh.Set Client Configuration  timeout=3s
 
-SSH To Node
-    [Documentation]	This logs into a node using ssh.
+Update Mistify Images
+    [Documentation]	Copy the images from a Mistify-OS build to the test
+    ...			environment.
     ...
-    ...	NOTE: This uses the running ssh session to run ssh to login to the
-    ...	node and therefore does not require switching ssh sessions.
-    [Arguments]	${_node}
-    ${_ip}=  Get Node IP Address  ${_node}
-    ${_uuid}=  Get Node UUID  ${_node}
-    ${_c}=  catenate
-    ...  sshpass -p ${MISTIFY_PASSWORD}
-    ...  ssh ${ssh_options}
-    ...  ${MISTIFY_USERNAME}@${_ip}
-    ${_o}=  SSH Run And Get Output  ${_c}
-    Should Contain  ${_o}  ${MISTIFY_USERNAME}@${_uuid}
-    Should Not Contain  ${_o}  Permission denied
+    ...  This assumes already logged into the test environment.
 
-Logout From Node
-    [Documentation]  Pretty simple. Provided for symmetry.
-    ${_o}=  SSH Run And Get Output  \nexit
-    Should Contain  ${_o}  logout
+    Log To Console  Updating Mistify Images
+    SSH Run  cd ~
+    ssh.Put File  ${BUILDDIR}/images/${MISTIFY_KERNEL_IMAGE}  images/
+    ssh.Put File  ${BUILDDIR}/images/${MISTIFY_INITRD_IMAGE}  images/
+    ${_o}=  SSH Run And Get Output  ls -l images
+    Log To Console  Mistify Images:\n${_o}
+    Should Contain  ${_o}  ${MISTIFY_KERNEL_IMAGE}
+    Should Contain  ${_o}  ${MISTIFY_INITRD_IMAGE}
 
-Copy File To Node
-    [Documentation]  Copy a file to a node using scp.
-    [Arguments]  ${_node}  ${_source}  ${_destination}
-    ${_ip}=  Get Node IP Address  ${_node}
-    ${_c}=  catenate
-    ...  sshpass -p ${MISTIFY_PASSWORD}
-    ...  scp ${ssh_options}
-    ...  ${_source}  ${MISTIFY_USERNAME}@${_ip}:${_destination}
-    Log To Console  \nRunning: ${_c}
-    ${_o}=  SSH Run And Get Output  ${_c}
-    Should Not Contain  ${_o}  No such file or directory
-    Should Not Contain  ${_o}  Is a directory
-    Should Not Contain  ${_o}  Permission denied
-
-Run Command On Node
-    [Documentation]	This uses ssh to run a command on the node and then
-    ...			return the output.
-    [Arguments]	${_node}  ${_command}
-    ${_ip}=  Get Node IP Address  ${_node}
-    ${_c}=  catenate
-    ...  sshpass -p ${MISTIFY_PASSWORD}
-    ...  ssh ${ssh_options}
-    ...  ${MISTIFY_USERNAME}@${_ip} ${_command}
-    Log To Console  \nRunning: ${_c}
-    ${_o}=  SSH Run And Get Output  ${_c}
-    Log To Console  Result: ${_o}
-    Should Not Contain  ${_o}  Permission denied
-    [Return]  ${_o}
-
-Reboot Node
-    [Documentation]	Reboot a node. It's assumed already logged in.
-    [Arguments]  ${_n}
-    Log To Console  Rebooting node: ${_n}
-    Attach Screen  ${_n}
-    ssh.Write  reboot
-    Detach Screen
