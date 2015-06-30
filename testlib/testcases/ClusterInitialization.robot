@@ -1,7 +1,15 @@
 *** Settings ***
 Documentation   This uses the collected node attributes to generate a node list
-...		which is then copied to the the first node. The cluster init
-...		script is then run which uses the collected attributes.
+...		which is then copied to the the first node.
+...
+...	This leaves with the container still running and the node VMs running
+...	in the context of the container.
+...
+...	Scripts were generated in ~/tmp for starting nodes with the same
+...	attributes.
+...	The disk images following the initial boot are saved so that states can
+...	be restored simply by copying the node initial disk image to the node
+...	running disk image.
 
 Library		String
 Library		Collections
@@ -13,6 +21,8 @@ Library		Collections
 Resource	${TESTLIBDIR}/resources/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
+
+Resource	${TESTLIBDIR}/resources/cluster-helpers.robot
 
 Suite Setup             Setup Testsuite
 Suite Teardown          Teardown Testsuite
