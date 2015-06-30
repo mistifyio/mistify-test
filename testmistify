@@ -509,7 +509,7 @@ log Setting BUILDDIR to $builddir
 log Setting TESTLIBDIR to $testlibdir
 log Setting TESTDISTRO to $testdistrodir/$testdistro
 log Setting CONTAINER_ID to $containerid
-log Setting TESTBED to $tesetbeddir/$testbed
+log Setting TESTBED to $testbeddir/$testbed
 log Setting USER to $USER
 log Setting HOME to $HOME
 
