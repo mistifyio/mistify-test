@@ -1,0 +1,159 @@
+#!/bin/bash
+#+
+# Use this script to trigger a build on a Jenkins server for the working branch.
+#-
+
+source scripts/mistify-test-functions.sh
+
+usage () {
+    cat << EOF
+Usage: $0 [options] [-- testmistifyoptions]
+  Use this script to remotely trigger a Mistify test run on a Jenkins CI server.
+  This can be a series of tests against and existing build or tests which are
+  designed to verify the build process using a container.
+  The Jenkins CI server must be configured to run the testmistify script on the
+  server in order to run tests.
+  Options:
+    ==== remote test ====
+    --jenkins <url>
+        The Jenkins CI server URL. The URL is saved in the file:
+        $testmistifystatedir/jenkins.
+        [jenkins=$jenkins]
+    --jenkinsjob <job>
+        The job to execute. This must match a name in the Jenkins job list. This
+        is saved in the file:
+        $testmistifystatedir/jenkinsjob
+        [jenkinsjob=$jenkinsjob]
+    --mistifytestbranch <branch>
+        The Mistify-test branch or tag to checkout for the test run.
+        This is saved in the file:
+        $testmistifystatedir/mistifytestbranch
+        [mistifytestbranch=$mistifytestbranch]
+    -- <testmistifyoptions>
+        Anything following the "--" is passed directly to the Jenkins server.
+        This can be additional options to pass to a script or a complete
+        command line depending upon how the job is configured on the server. The
+        job needs to be configured to accept a parameter named "testmistify_options".
+
+    Parameters passed to the Jenkins server:
+        [mistify_test_branch=$mistifytestbranch]
+        [testmistify_options=<testmistifyoptions>]
+    ==== other ====
+    --resetdefaults
+        Reset options back to their default values.
+    --verbose
+        Verbose output from this script.
+    --dryrun
+        Just testing what will happen with this script. Don't send anything to
+        the Jenkins server and instead display the command.
+    -h|--help
+        Display this usage.
+
+  NOTE: This script maintains state in $testmistifystatedir.
+EOF
+}
+
+#+
+# Handle the command line options.
+#-
+a=`getopt -l "\
+jenkins:,\
+jenkinsjob:,\
+mistifytestbranch:,\
+resetdefaults,\
+verbose,\
+dryrun,\
+help" \
+   -o "h" -- "$@"`
+
+if [ $? -gt 0 ]; then
+    usage
+    exit 1
+fi
+
+eval set -- $a
+
+while [ $# -ge 1 ]; do
+    case "$1" in
+	--)
+	    shift
+	    testmistifyoptions=$*
+	    break
+	    ;;
+	--jenkins)
+	    jenkins=$2
+	    shift
+	    ;;
+	--jenkinsjob)
+	    jenkinsjob=$2
+	    shift
+	    ;;
+	--mistifytestbranch)
+	    mistifytestbranch=$2
+	    shift
+	    ;;
+	--resetdefaults)
+	    resetdefaults=y
+	    ;;
+	--verbose)
+	    verbose=y
+	    ;;
+	--dryrun)
+	    dryrun=echo
+	    ;;
+	-h|--help)
+	    showusage=y
+	    ;;
+	# using getopt should avoid needing this catchall but just in case...
+	*)
+	    error "Invalid option: $1"
+	    usage
+	    exit 1
+	    ;;
+    esac
+    shift
+done
+
+verbose The Mistify test branch default is: $mistifytestbranchdefault
+
+statevars=(
+    jenkins\;$(get_test_default jenkins http://mistify-dev-2.office.omniti.com:8081)
+    jenkinsjob\;$(get_test_default jenkinsjob MistifyTest-remote)
+    mistifytestbranch\;$(get_test_default \
+	mistifytestbranch $mistifytestbranchdefault)
+)
+for v in "${statevars[@]}"
+do
+    if [ ! -z "$resetdefaults" ]; then
+	clear_test_variable $v
+    fi
+    init_test_variable $v
+done
+
+verbose The Mistify test branch is: $mistifytestbranch
+
+if [ ! -z "$showusage" ]; then
+    usage
+    exit 0
+fi
+
+if [ -n "$testmistifyoptions" ]; then
+  message "Options passed to testmistify are: $testmistifyoptions"
+  params="&testmistify_options="
+  params+=`echo $testmistifyoptions | sed 's/ /%20/g'`
+  message "Adding Jenkins parameters: $params"
+fi
+
+jenkinscommand="wget -O /dev/null $jenkins/job/$jenkinsjob/buildWithParameters?token=buildmistify&mistify_test_branch=$mistifytestbranch$params"
+
+if [ -n "$dryrun" ]; then
+  message "Just a test run -- not building."
+fi
+
+message "Triggering a remote build on Jenkins server: $jenkins"
+message "The branch is: $mistfiytestbranch"
+$dryrun $jenkinscommand
+if [ $? -gt 0 ]; then
+  error The Jenkins server is not running at the URL or did not accept the job.
+  exit 1
+fi
