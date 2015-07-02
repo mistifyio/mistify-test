@@ -66,5 +66,8 @@ ${MISTIFY_VM_ETH_INTERFACE}	enp0s3
 # Cluster nodes  -- NOTE: These need to end with an hex digit because they are
 # also used to construct MAC addresses.
 @{MISTIFY_CLUSTER_NODES}	node0  node1  node2
+${MISTIFY_CLUSTER_NODE_BRIDGE}	br0
 ${MISTIFY_CLUSTER_GATEWAY_IP}	192.168.0.1
+${MISTIFY_CLUSTER_PRIMARY_IP}	192.168.0.200
 ${MISTIFY_CLUSTER_IP_LIST}	\n'192.168.0.200'\n'192.168.0.201'\n'192.168.0.202'
+${MISTIFY_CLUSTER_NET_MASK_BITS}  24
