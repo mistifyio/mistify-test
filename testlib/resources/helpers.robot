@@ -9,8 +9,12 @@ ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 *** Keywords ***
 Log Output
-    [Arguments]  ${output}
-    Log To Console  \nConsole output: ${output}\n----
+    [Arguments]  ${_output}
+    Log  \nConsole output: \n++++\n${_output}\n----  console=true
+
+Log Message
+    [Arguments]  ${_message}
+    Log  \n${_message}  console=true
 
 SSH Run
     [Documentation]	This runs a command using an active ssh session and
@@ -62,7 +66,25 @@ SSH Run And Get Return Code
     ${_o}=  ssh.Read	delay=0.5s
     Log Output  ${_o}
     ${_l}=  Get Line  ${_o}  0
-    [Return]  ${_l}
+    # Ensure only the return code character is used.
+    ${_r}=  Remove String Using Regexp  ${_l}  \\D
+    Log Message  Return code: ${_r}
+    ${_r}=  Convert To Integer  ${_r}
+    [Return]  ${_r}
+
+Files Should Be Same
+    [Arguments]  ${_file1}  ${_file2}
+    Log Message  \nComparing: \n\t${_file1}\n\t${_file2}
+    ${_r}=  SSH Run And Get Return Code  diff ${_file1} ${_file2}
+    Log Message  The return code is: ${_r}
+    Should Be Equal As Integers  ${_r}  ${0}
+
+Files Should Be Different
+    [Arguments]  ${_file1}  ${_file2}
+    Log Message  \nComparing: \n\t${_file1}\n\t${_file2}
+    ${_r}=  SSH Run And Get Return Code  diff ${_file1} ${_file2}
+    Log Message  The return code is: ${_r}
+    Should Not Be Equal As Integers  ${_r}  ${0}
 
 Consume Console Output
     [Documentation]     This consumes and ignores all the console output so
@@ -82,7 +104,7 @@ Attach Screen
     ...	Because re-attaching a screen session can result in a bunch of
     ...	console spew the output is consumed and ignored.
     [Arguments]	${_name}
-    Log To Console  \nConnecting to screen session: ${_name}
+    Log Message  \nConnecting to screen session: ${_name}
     SSH Run  screen -r ${_name}
 
 Detach Screen
@@ -91,7 +113,7 @@ Detach Screen
     ...	This is provided because of the funky control character handling.
     ...
     ...  NOTE: This assumes that the session is active.
-    Log To Console  \nDetaching from screen session.
+    Log Message  \nDetaching from screen session.
     ${_c_a}=  Evaluate  chr(int(1))
     ssh.Write Bare  ${_c_a}d
 
@@ -119,7 +141,7 @@ Learn Test Interface
     ...  ifconfig \| grep 'inet ${MISTIFY_BRIDGE_SUBNET}' -B 1 \|
     ...  grep flags \| cut -d ':' -f 1
     ${_o}=  SSH Run And Get Output  ${_c}
-    Log To Console  \nLearn Active Interface: ${_o}
+    Log Message  \nLearn Active Interface: ${_o}
     ${_r}=  Get Line  ${_o}  -2
     [Return]  ${_r}
 
@@ -131,7 +153,7 @@ Learn IP Address
     ${_c}=  catenate  SEPARATOR=${SPACE}
     ...  ifconfig ${_interface} \| grep 'inet ' \| awk '{print \$2}'
     ${_o}=  SSH Run And Get Output  ${_c}
-    Log To Console  \nLearn IP Address: ${_o}
+    Log Message  \nLearn IP Address: ${_o}
     ${_r}=  Get Line  ${_o}  -2
     [Return]  ${_r}
 
@@ -142,7 +164,7 @@ Learn MAC Address
     ${_c}=  catenate  SEPARATOR=${SPACE}
     ...  ifconfig ${_interface} \| grep ether \| awk '{print \$2}'
     ${_o}=  SSH Run And Get Output  ${_c}
-    Log To Console  \nLearn MAC Address: ${_o}
+    Log Message  \nLearn MAC Address: ${_o}
     ${_r}=  Get Line  ${_o}  -2
     [Return]  ${_r}
 
@@ -151,7 +173,7 @@ Learn UUID
 
     [Arguments]	${_interface}
     ${_o}=  SSH Run And Get Output  hostname
-    Log To Console  \nLearn UUID: ${_o}
+    Log Message  \nLearn UUID: ${_o}
     ${_r}=  Get Line  ${_o}  -2
     [Return]  ${_r}
 
@@ -179,12 +201,12 @@ Update Mistify Images
     ...
     ...  This assumes already logged into the test environment.
 
-    Log To Console  Updating Mistify Images
+    Log Message  Updating Mistify Images
     SSH Run  cd ~
     ssh.Put File  ${BUILDDIR}/images/${MISTIFY_KERNEL_IMAGE}  images/
     ssh.Put File  ${BUILDDIR}/images/${MISTIFY_INITRD_IMAGE}  images/
     ${_o}=  SSH Run And Get Output  ls -l images
-    Log To Console  Mistify Images:\n${_o}
+    Log Message  Mistify Images:\n${_o}
     Should Contain  ${_o}  ${MISTIFY_KERNEL_IMAGE}
     Should Contain  ${_o}  ${MISTIFY_INITRD_IMAGE}
 
