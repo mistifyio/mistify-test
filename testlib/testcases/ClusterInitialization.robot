@@ -34,10 +34,12 @@ ${clusterinitscript}	mistify-cluster-init
 
 *** Test Cases ***
 Verify Container Is Running
+    [Tags]	Net-config
     ${_rc}=	Is Container Running	${containername}
     Should Be Equal As Integers	${_rc}	1
 
 Get Container IP Address
+    [Tags]	Net-config
     Log To Console	\n
     ${_o}=	Container IP Address	${containername}
     Log To Console	\nContainer IP address: ${_o}
@@ -46,6 +48,7 @@ Get Container IP Address
     Log To Console	\nContainer IP address is: ${ip}
 
 Login To Container
+    [Tags]	Net-config
     Log To Console  \nLogging in as ${USER} to container at IP: ${ip}
     Login to SUT  ${ip}  ${USER}  ${USER}
     ${_o}=  SSH Run And Get Output  pwd
@@ -60,12 +63,14 @@ Collect Node Attributes
     ...  NOTE: Since "Collect Attributes" creates a global scope variable
     ...  (${Nodes}) any test suites following this one will be able to access
     ...  the already collected atributes for each of the test nodes.
+    [Tags]	Net-config
     Collect Attributes
 
 Generate The Node Attribute List
     [Documentation]	Using the Nodes variable a shell script is generated
     ...			containing variables needed by the cluster-init.sh
     ...			script.
+    [Tags]	Net-config
     ${_iflist}=  catenate  \nifs=(
     ${_uuidlist}=  catenate  \nuuids=(
     ${_iplist}=  catenate  \ninitialips=(
@@ -106,12 +111,53 @@ Generate The Node Attribute List
     Set Suite Variable  ${NodesScript}
 
 Install Node Attribute List On The Primary Node
+    [Tags]	Net-config
     Attach Screen  @{MISTIFY_CLUSTER_NODES}[0]
     ${_of}=  catenate
     ...  cat >/root/nodes.sh << EOF\n
     ...  ${NodesScript}
     ...  \nEOF
     SSH Run  ${_of}
+    Detach Screen
+
+Install Primary Node Net Config
+    [Documentation]  This generates network config files for a cluster.
+    ...
+    ...	These are installed in the /root directory for later use.
+    [Tags]	Net-config
+    ${_a}=  Get From Dictionary  ${Nodes}  @{MISTIFY_CLUSTER_NODES}[0]
+    ${_if}=  Get From Dictionary  ${_a}  if
+    ${_ip}=  Get From Dictionary  ${_a}  ip
+    Attach Screen  @{MISTIFY_CLUSTER_NODES}[0]
+    ${_c}=  catenate
+    ...  cat > /root/${_if}.network.test <<EOF\n
+    ...  [Match]\n
+    ...  Name=${_if}\n
+    ...  \n
+    ...  [Network]\n
+    ...  DNS=127.0.0.1\n
+    ...  Address=${MISTIFY_CLUSTER_PRIMARY_IP}/${MISTIFY_CLUSTER_NET_MASK_BITS}\n
+    ...  # needs to be 192.168.0 subnet\n
+    ...  Gateway=${MISTIFY_CLUSTER_GATEWAY_IP}\n
+    ...  \nEOF
+    SSH Run  ${_c}
+    SSH Run  cp /etc/systemd/network/br0.network br0.network.original
+    ${_c}=  catenate
+    ...  cat > /root/ethernet.network.test <<EOF\n
+    ...  [Match]\n
+    ...  Name=en*\n
+    ...  \n
+    ...  [Network]\n
+    ...  Bridge=${_if}\n
+    ...  \nEOF
+    SSH Run  ${_c}
+    SSH Run  cp /etc/systemd/network/ethernet.network ethernet.network.original
+    ${_c}=  catenate
+    ...  cat > /root/resolv.conf.test <<EOF\n
+    ...  nameserver 127.0.0.1\n
+    ...  \nEOF
+    SSH Run  ${_c}
+    SSH Run  cp /etc/resolv.conf resolv.conf.original
     Detach Screen
 
 Install Cluster Init Script On The Primary Node
