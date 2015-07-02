@@ -350,18 +350,15 @@ statevars=(
 		    toolchainversion crosstool-ng-1.21.0)
     goversion\;$(get_build_default $buildmistifystatedir \
 		    gotag master)
-    testlibdir\;$(get_test_default testlibdir testlib)
-    testbeddir\;$(get_test_default testbeddir \
-	$(get_test_default testlibdir testlib)/testbeds)
-    testbed\;$(get_test_default testbed labrat.robot)
-    testdistrodir\;$(get_test_default testdistrodir \
-	$(get_test_default testlibdir testlib)/distros)
-    testdistro\;$(get_test_default testdistro ubuntu-trusty-amd64.robot)
-    containerid\;$(get_test_default containerid -test)
-    testsuitedir\;$(get_test_default testsuitedir \
-	$(get_test_default testlibdir testlib)/testsuites)
-    testsuite\;$(get_test_default testsuite defaulttests)
-    testlogdir\;$(get_test_default testlogdir testlogs)
+    testlibdir\;testlib
+    testbeddir\;testlib/testbeds
+    testbed\;labrat.robot
+    testdistrodir\;testlib/distros
+    testdistro\;ubuntu-trusty-amd64.robot
+    containerid\;-test
+    testsuitedir\;testlib/testsuites
+    testsuite\;defaulttests
+    testlogdir\;testlogs
     testlog\;testmistify.log
 )
 for v in "${statevars[@]}"

@@ -117,10 +117,9 @@ done
 verbose The Mistify test branch default is: $mistifytestbranchdefault
 
 statevars=(
-    jenkins\;$(get_test_default jenkins http://mistify-dev-2.office.omniti.com:8081)
-    jenkinsjob\;$(get_test_default jenkinsjob MistifyTest-remote)
-    mistifytestbranch\;$(get_test_default \
-	mistifytestbranch $mistifytestbranchdefault)
+    jenkins\;http://mistify-dev-2.office.omniti.com:8081
+    jenkinsjob\;MistifyTest-remote
+    mistifytestbranch\;$mistifytestbranchdefault
 )
 for v in "${statevars[@]}"
 do

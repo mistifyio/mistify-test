@@ -79,7 +79,7 @@ function init_test_variable() {
     eval val=\$${e[0]}
     if [ -z "$val" ]; then
 	verbose Setting ${e[0]} to default: ${e[1]}
-	eval ${e[0]}=${e[1]}
+	eval ${e[0]}=$(get_test_default ${e[0]} ${e[1]})
     fi
     eval val=\$${e[0]}
     verbose "State variable: ${e[0]} = $val"
@@ -97,6 +97,7 @@ function clear_test_variable() {
       d=$2
     fi
     e=(`echo $1 | tr $d " "`)
+    verbose ""
     verbose Clearing state variable: ${e[0]}
     reset_test_default ${e[0]}
 }
