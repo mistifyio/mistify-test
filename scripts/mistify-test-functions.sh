@@ -11,10 +11,10 @@ fi
 
 # Which branch this script is running with.
 if [ -e .git ]; then
-    mistifytestbranch=`git symbolic-ref -q --short HEAD`
+    mistifytestbranchdefault=`git symbolic-ref -q --short HEAD`
     # Jenkins detaches for branches so need to use a commit ID instead.
-    if [ -z "$mistifytestbranch" ]; then
-	mistifytestbranch=`git rev-parse HEAD`
+    if [ -z "$mistifytestbranchdefault" ]; then
+	mistifytestbranchdefault=`git rev-parse HEAD`
     fi
 fi
 
