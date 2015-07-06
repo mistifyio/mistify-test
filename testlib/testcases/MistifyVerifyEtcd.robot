@@ -33,7 +33,7 @@ Suite Teardown	Release Cluster Container
 *** Variables ***
 ${etc_data_dir}		/mistify/data/etcd
 ${test_data}		This is test data
-${test_data_path}	/testmistify/TEST_DATA
+${test_data_path}	testmistify/TEST_DATA
 
 *** Test Cases ***
 Test is running
@@ -76,15 +76,18 @@ Verify Etcd Is Listening On Configured Ports
     Is Etcd Listening On Port ${ip} 2379
 
 Verify Data Can Be Set
-    ${_o}=  SSH Run And Get Output  etcdctl set ${test_data_path} '${test_data}'
+    ${_o}=  SSH Run And Get Output  etcdctl set /${test_data_path} '${test_data}'
     Should Contain  ${_o}  ${test_data}
 
 Verify Data Can Be Retrieved
-    ${_o}=  SSH Run And Get Output  etcdctl get ${test_data_path}
+    ${_o}=  SSH Run And Get Output  etcdctl get /${test_data_path}
     Should Contain  ${_o}  ${test_data}
 
 Verify Data Can Be Retrieved Using Curl
-    ${_o}=  SSH Run And Get Output  curl http://localhost:4001/v2/keys/${test_data_path}
+    ${_c}=  catenate
+    ...  curl http://localhost:4001/v2/keys/${test_data_path} 2>/dev/null \|
+    ...  cut -d ':' -f 5 \| cut -d '"' -f 2
+    ${_o}=  SSH Run And Get Output  ${_c}
     Should Contain  ${_o}  ${test_data}
 
 *** Keywords ***
