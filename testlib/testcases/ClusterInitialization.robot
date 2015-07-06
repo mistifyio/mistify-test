@@ -166,6 +166,12 @@ Install Cluster Init Script On The Primary Node
     ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]  ls
     ${_o}=  Should Contain  ${_o}  ${clusterinitscript}
 
+Install Json Parser On The Primary Node
+    Copy File To Node  @{MISTIFY_CLUSTER_NODES}[0]
+    ...  ${TESTLIBDIR}/scripts/${MISTIFY_JSON_PARSER}  ${MISTIFY_USER_HOME}
+    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]  ls
+    ${_o}=  Should Contain  ${_o}  ${MISTIFY_JSON_PARSER}
+
 Restart Nodes
     :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
     \  ${_a}=  Get From Dictionary  ${Nodes}  ${_n}
