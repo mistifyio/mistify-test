@@ -84,10 +84,20 @@ Verify Data Can Be Retrieved
     Should Contain  ${_o}  ${test_data}
 
 Verify Data Can Be Retrieved Using Curl
+    SSH Run  rm -f tmp.json
     ${_c}=  catenate
-    ...  curl http://localhost:4001/v2/keys/${test_data_path} 2>/dev/null \|
-    ...  cut -d ':' -f 5 \| cut -d '"' -f 2
-    ${_o}=  SSH Run And Get Output  ${_c}
+    ...  curl http://localhost:4001/v2/keys/${test_data_path} -o tmp.json
+    SSH Run  ${_c}
+    ${_o}=  SSH Run And Get Output  ./${MISTIFY_JSON_PARSER} tmp.json value
+    Should Contain  ${_o}  ${test_data}
+
+Verify Data Can Be Retrieved By Another Host
+    SSH Run  rm -f tmp/tmp.json
+    Release Node
+    ${_c}=  catenate
+    ...  curl http://${ip}:4001/v2/keys/${test_data_path} -o tmp/tmp.json
+    SSH Run  ${_c}
+    ${_o}=  SSH Run And Get Output  testlib/scripts/${MISTIFY_JSON_PARSER} tmp/tmp.json value
     Should Contain  ${_o}  ${test_data}
 
 *** Keywords ***
