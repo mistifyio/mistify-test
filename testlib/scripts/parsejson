@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import json
+import sys
+from pprint import pprint
+
+jdata = open(sys.argv[1])
+
+data = json.load(jdata)
+
+print data['node'][sys.argv[2]]
+
+jdata.close()
