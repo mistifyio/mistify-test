@@ -79,8 +79,12 @@ Verify Data Can Be Set
     ${_o}=  SSH Run And Get Output  etcdctl set ${test_data_path} '${test_data}'
     Should Contain  ${_o}  ${test_data}
 
-Verify Data Can Be retrieved
+Verify Data Can Be Retrieved
     ${_o}=  SSH Run And Get Output  etcdctl get ${test_data_path}
+    Should Contain  ${_o}  ${test_data}
+
+Verify Data Can Be Retrieved Using Curl
+    ${_o}=  SSH Run And Get Output  curl http://localhost:4001/v2/keys/${test_data_path}
     Should Contain  ${_o}  ${test_data}
 
 *** Keywords ***
