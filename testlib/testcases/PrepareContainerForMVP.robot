@@ -35,18 +35,27 @@ ${guestimagedir}	guest-images
 Verify Current Build
     [Documentation]	Verify the Mistify-OS directory exists and a build has
     ...			completed.
+    [Tags]  update-lochness
     OperatingSystem.File Should Exist  ${MISTIFYOSDIR}/buildgopackage
     ...	msg=The Mistify-OS script "buildgopackage" does not exist at:\n${MISTIFYOSDIR}
-    OperatingSystem.Directory Should Exist  ${LOCHNESS_CMD_PATH}
-    ...	msg=The Lochness cmd directory does not exist at:\n${LOCHNESS_CMD_PATH}
+    ${_c}=  catenate
+    ...	ls -d ${BUILDDIR}/build/lochness-* \| grep -v ansible \| cut -d '-' -f 2
+    ${_v}=  Run  ${_c}
+    Log Message  Lochness version is: ${_v}
+    Set Suite Variable  ${lochnessversion}  ${_v}
+    Set Suite Variable  ${lochnesscmdpath}  ${BUILDDIR}/build/lochness-${lochnessversion}/cmd
+    OperatingSystem.Directory Should Exist  ${lochnesscmdpath}
+    ...	msg=The Lochness cmd directory does not exist at:\n${lochnesscmdpath}
 
 Build The Lochness Admin Tools
     [Documentation]  Build the tools needed to administer a Mistify-OS cluster.
+    ...	This uses the build in ${BUILDDIR} to determine the version.
+    [Tags]  update-lochness
     :FOR  ${_t}  IN  @{LOCHNESS_ADMIN_TOOLS}
       \  ${_c}=  catenate  SEPARATOR=${SPACE}
       \  ...  cd ${MISTIFYOSDIR} &&
       \  ...  ./buildgopackage
-      \  ...  --gopackagedir  ${LOCHNESS_CMD_PATH}/${_t}
+      \  ...  --gopackagedir  ${lochnesscmdpath}/${_t}
       \  ...  --gopackagename  ${_t}
       \  ${_rc}  ${_o}=  Run And Return Rc And Output  ${_c}
       \  Should Be Equal As Integers  ${_rc}  0
@@ -73,11 +82,21 @@ Login To Container
     Set Suite Variable  ${homedir}
     Log To Console  Home directory is: ${homedir}
 
+Install Guest Image
+    [Documentation]	If the guest image exists in the download directory
+    ...			then copy it to the container which will make it
+    ...			unnecessary to download the image there (next test).
+    SSH Run  mkdir -p ${httpserverdir}/${guestimagedir}
+    ${_s}  ${_o}=  Run Keyword And Ignore Error
+    ...	ssh.Put File  ${DOWNLOADDIR}/${MISTIFY_GUEST_IMAGE}
+    ...	${httpserverdir}/${guestimagedir}/
+    Run Keyword If  '${_s}' == 'PASS'
+    ...	Log Message  Image file ${MISTIFY_GUEST_IMAGE} copied to container.
+
 Download Guest Image
     [Documentation]	Download a guest image to use with the test.
     ...
     ...  NOTE: The download occurs only if the file doesn't exist.
-    SSH Run  mkdir -p ${httpserverdir}/${guestimagedir}
     SSH Run  cd ${httpserverdir}/${guestimagedir}
     ${_o}=  SSH Run And Get Output  pwd
     Log To Console  \nDownloading guest image from: \n${MISTIFY_GUEST_IMAGE_URL}/${MISTIFY_GUEST_IMAGE}
