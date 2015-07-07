@@ -183,7 +183,7 @@ Setup Testsuite
     ${containername}=	Container Name
     Set Suite Variable  ${containername}
     Set Suite Variable  ${prompt}  root\@${containername}
-    Set Suite Variable  ${localprompt}=  ${USER}@
+    Set Suite Variable  ${localprompt}  ${USER}@
 
     ${_rc}=	Use Container
     ...	${containername}  ${DISTRO_NAME}
