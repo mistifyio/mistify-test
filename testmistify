@@ -31,6 +31,12 @@ Usage: $0 [options] [-- test suite options]
         This option is saved in the file:
         $testmistifystatedir/builddir
         [builddir=$builddir]
+    --downloaddir <dir>
+        The destination for files downloaded by the Mistiy-OS build. Test related
+        files may be downloaded to this directory as well.
+        This option is saved in the file:
+        $testmistifystatedir/downloaddir
+        [downloaddir=$downloaddir]
     --mistifyosversion <version>
         Use this version of Mistify-OS. This determines the version of Mistify-OS
         to build or test against.
@@ -160,6 +166,9 @@ Usage: $0 [options] [-- test suite options]
     BUILDDIR = The directory in which Mistify-OS was built. Test cases can use
         this to test against different builds of the Mistify-OS.
     [$builddir]
+    DOWNLOADDIR = The directory in which the Mistify-OS build downloads package
+    source files. Test related downloads can reside here as well.
+    [$downloaddir]
     TESTLIBDIR = The path to the test script library.
     [$testlibdir]
     TESTDISTRO = The path to the description of the Linux distribution used
@@ -192,6 +201,7 @@ EOF
 a=`getopt -l "\
 mistifyosdir:,\
 builddir:,\
+downloaddir:,\
 mistifyosversion:,\
 buildrootversion:,\
 toolchainversion:,\
@@ -235,6 +245,10 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--builddir)
 	    builddir=$2
+	    shift
+	    ;;
+	--downloaddir)
+	    downloaddir=$2
 	    shift
 	    ;;
 	--mistifyosversion)
@@ -343,6 +357,8 @@ buildmistifystatedir=$mistifyosdir/.buildmistify
 statevars=(
     builddir\;$(get_build_default $buildmistifystatedir \
 		    variantbuilddir $mistifyosdir/build/mistify/base)
+    downloaddir\;$(get_build_default $buildmistifystatedir \
+		    downloaddir $PWD/downloads)
     mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
     buildrootversion\;$(get_build_default $buildmistifystatedir \
 		    buildrootversion master)
@@ -424,6 +440,12 @@ else
     warning "The build directory $builddir does not exist."
 fi
 
+if [ -d "$downloaddir" ]; then
+    message "Downloaded components are expected to be in: $downloaddir"
+else
+    warning "The download directory $downloaddir does not exist."
+fi
+
 if [ -d "$testlibdir" ]; then
     log "Using test library located in: $testlibdir"
 else
@@ -503,6 +525,7 @@ log Setting BUILDROOTVERSION to $buildrootversion
 log Setting TOOLCHAINVERSION to $toolchainversion
 log Setting GOVERSION to $goversion
 log Setting BUILDDIR to $builddir
+log Setting DOWNLOADDIR to $downloaddir
 log Setting TESTLIBDIR to $testlibdir
 log Setting TESTDISTRO to $testdistrodir/$testdistro
 log Setting CONTAINER_ID to $containerid
@@ -518,6 +541,7 @@ pybotcommand="pybot $verboseoption -d $testlogdir \
     -v TOOLCHAINVERSION:$toolchainversion \
     -v GOVERSION:$goversion \
     -v BUILDDIR:$builddir \
+    -v DOWNLOADDIR:$downloaddir \
     -v TESTLIBDIR:$testlibdir \
     -v TESTDISTRO:$testdistrodir/$testdistro \
     -v CONTAINER_ID:$containerid \
