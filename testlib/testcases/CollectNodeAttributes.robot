@@ -21,6 +21,8 @@ Resource	${TESTLIBDIR}/resources/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 
+Resource	${TESTLIBDIR}/resources/cluster-helpers.robot
+
 Suite Setup             Setup Testsuite
 Suite Teardown          Teardown Testsuite
 
