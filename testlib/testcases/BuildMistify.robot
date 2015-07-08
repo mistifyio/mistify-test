@@ -23,7 +23,7 @@ ${mistifybuilddir}=	~/build
 
 # When building use a download cache outside the build tree. No need to
 # download the same files over and over again when reusing containers.
-${downloaddir}=	${mistifybuilddir}/downloads
+${builddownloaddir}=	${mistifybuilddir}/downloads
 
 @{checkpoints}=
 ...	Using Buildroot located at:
@@ -152,7 +152,7 @@ Start The Build
     ${_o}=	ssh.Read Until  ${prompt}
     Should Contain  ${_o}  buildmistify
     ${_c}=	catenate
-    ...	./buildmistify -d ${downloaddir} --resetmasters
+    ...	./buildmistify -d ${builddownloaddir} --resetmasters
     ...	--buildrootversion ${BUILDROOTVERSION}
     ...	--toolchainversion ${TOOLCHAINVERSION}
     ...	--gotag ${GOVERSION}
