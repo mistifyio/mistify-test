@@ -62,11 +62,11 @@ SSH Run And Get Return Code
     [Arguments]	${_command}
     ssh.Write  ${_command}
     ssh.Read	delay=0.5s
-    ssh.Write  echo $?
+    ssh.Write  echo RC=$?
     ${_o}=  ssh.Read	delay=0.5s
     Log Output  ${_o}
-    ${_l}=  Get Line  ${_o}  0
-    # Ensure only the return code character is used.
+    ${_l}=  Get Lines Containing String  ${_o}  RC=
+    # Ensure only the return code is used.
     ${_r}=  Remove String Using Regexp  ${_l}  \\D
     Log Message  Return code: ${_r}
     ${_r}=  Convert To Integer  ${_r}
