@@ -53,6 +53,15 @@ SSH Run And Get First Line
     ${_l}=  Get Line  ${_o}  1
     [Return]  ${_l}
 
+SSH Run And Get Key Line
+    [Documentation]	This runs the command using a key to indicate the output
+    ...			and returns the line containing the key.
+    [Arguments]	${_key}  ${_command}
+    ${_o}=  SSH Run And Get Output  echo ${_key}`${_command}`
+    ${_l}=  Get Lines Containing String  ${_o}  ${_key}
+    ${_r}=  Remove String  ${_l}  ${_key}
+    [Return]  ${_r}
+
 SSH Run And Get Return Code
     [Documentation]	This runs a command using an active ssh session and
     ...			returns the return code as an ASCII string.
@@ -140,9 +149,8 @@ Learn Test Interface
     ${_c}=  catenate  SEPARATOR=${SPACE}
     ...  ifconfig \| grep 'inet ${MISTIFY_BRIDGE_SUBNET}' -B 1 \|
     ...  grep flags \| cut -d ':' -f 1
-    ${_o}=  SSH Run And Get Output  ${_c}
-    Log Message  \nLearn Active Interface: ${_o}
-    ${_r}=  Get Line  ${_o}  -2
+    ${_r}=  SSH Run And Get Key Line  IF=  ${_c}
+    Log Message  \nLearn Active Interface: ${_r}
     [Return]  ${_r}
 
 Learn IP Address
@@ -150,31 +158,43 @@ Learn IP Address
     ...
     ...	WARNING: This is very basic at the moment.
     [Arguments]	${_interface}
-    ${_c}=  catenate  SEPARATOR=${SPACE}
+    ${_c}=  catenate
     ...  ifconfig ${_interface} \| grep 'inet ' \| awk '{print \$2}'
-    ${_o}=  SSH Run And Get Output  ${_c}
-    Log Message  \nLearn IP Address: ${_o}
-    ${_r}=  Get Line  ${_o}  -2
+    ${_r}=  SSH Run And Get Key Line  IP=  ${_c}
+    Log Message  \nLearn IP Address: ${_r}
+    [Return]  ${_r}
+
+Learn IP Address For Subnet
+    [Documentation]	Get the IP address for a subnet on a given interface.
+    ...
+    ...  An interface can have more than one IP address. This returns the IP
+    ...  IP address for a subnet.
+    [Arguments]	${_interface}  ${_subnet}
+    ${_c}=  catenate
+    ...  ip addr show dev ${_interface} \| grep ${_subnet}
+    ${_o}=  SSH Run And Get Key Line  IP=  ${_c}
+    Should Contain  ${_o}  ${_subnet}
+    @{_ls}=  Split String  ${_o}
+    @{_f}=  Split String  @{_ls}[1]  /
+    ${_r}=  Set Variable  @{_f}[0]
+    Log Message  \nLearn IP Address: ${_r}
     [Return]  ${_r}
 
 Learn MAC Address
     [Documentation]	Get the MAC address for a network interface.
 
     [Arguments]	${_interface}
-    ${_c}=  catenate  SEPARATOR=${SPACE}
+    ${_c}=  catenate
     ...  ifconfig ${_interface} \| grep ether \| awk '{print \$2}'
-    ${_o}=  SSH Run And Get Output  ${_c}
-    Log Message  \nLearn MAC Address: ${_o}
-    ${_r}=  Get Line  ${_o}  -2
+    ${_r}=  SSH Run And Get Key Line  MAC=  ${_c}
+    Log Message  \nLearn MAC Address: ${_r}
     [Return]  ${_r}
 
 Learn UUID
     [Documentation]	Get the UUDI for the current console device.
 
-    [Arguments]	${_interface}
-    ${_o}=  SSH Run And Get Output  hostname
-    Log Message  \nLearn UUID: ${_o}
-    ${_r}=  Get Line  ${_o}  -2
+    ${_r}=  SSH Run And Get Key Line  UUID=  hostname
+    Log Message  \nLearn UUID ${_r}
     [Return]  ${_r}
 
 Login To Mistify

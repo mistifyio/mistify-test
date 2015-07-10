@@ -34,7 +34,7 @@ Collect Attributes
       \  Log To Console  \nNode ${_n} IP address: ${_ip}
       \  ${_mac}=  Learn MAC Address  ${_if}
       \  Log To Console  \nNode ${_n} MAC address: ${_mac}
-      \  ${_uuid}=  Learn UUID  ${_if}
+      \  ${_uuid}=  Learn UUID
       \  Log To Console  \nNode ${_n} UUID: ${_uuid}
       \  ${_a}=  Create Dictionary  uuid  ${_uuid}  if  ${_if}  ip  ${_ip}  mac  ${_mac}
       \  Set To Dictionary  ${Nodes}  ${_n}  ${_a}
