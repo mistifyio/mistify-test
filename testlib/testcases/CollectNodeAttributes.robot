@@ -28,7 +28,6 @@ Suite Teardown          Teardown Testsuite
 
 *** Variables ***
 ${httpserverdir}	http
-${guestimagedir}	guest-images
 
 *** Test Cases ***
 Verify Container Is Running
@@ -59,6 +58,19 @@ Collect Node Attributes
     ...  (${Nodes}) any test suites following this one will be able to access
     ...  the already collected atributes for each of the test nodes.
     Collect Attributes
+
+Log Node Attributes
+    :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
+    \  ${_a}=  Get From Dictionary  ${Nodes}  ${_n}
+    \  ${_uuid}=  Get From Dictionary  ${_a}  uuid
+    \  ${_if}=  Get From Dictionary  ${_a}  if
+    \  ${_ip}=  Get From Dictionary  ${_a}  ip
+    \  ${_mac}=  Get From Dictionary  ${_a}  mac
+    \  Log Message  \n----\nNode: ${_n}
+    \  Log Message  uuid: ${_uuid}
+    \  Log Message  network interface: ${_if}
+    \  Log Message  ip: ${_ip}
+    \  Log Message  mac: ${_mac}
 
 *** Keywords ***
 Setup Testsuite
