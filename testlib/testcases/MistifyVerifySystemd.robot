@@ -39,7 +39,10 @@ Verify Systemd Is Functional
     [Setup]	Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
     ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-system-running
     Should Contain  ${_l}  running
-    SSH Run  systemctl --no-pager --state=failed
+
+Verify No Failed Services
+    ${_o}=  SSH Run And Get Output  systemctl --no-pager --state=failed
+    Should Not Contain  ${_o}  failed
 
 Verify Etcd Is Running
     [Documentation]	Verify the etcd service is running. This should be
@@ -50,16 +53,20 @@ Verify Etcd Is Running
 Verify Etcd Can Be Shutdown
     [Documentation]	Verify the etcd service can be shutdown using systemctl.
 
-    ${_c}=  catenate
-    ...	systemctl --no-pager stop etcd >/dev/null;
-    ...	systemctl --no-pager is-active etcd
-    ${_l}=  SSH Run And Get First Line  ${_c}
-    Should Contain  ${_l}  inactive
+    ${_t}=  Mark Time
 
-Verify Etcd Will Be Restarted
+    SSH Run  systemctl --no-pager stop etcd >/dev/null
+    Sleep  2  Wait for etcd to be automatically restarted.
+    ${_o}=  SSH Run And Get Output  journalctl --no-pager -u etcd --since ${_t}
+    Should Contain  ${_o}  Stopping etcd
+    Should Contain  ${_o}  Stopped etcd
+    Should Contain  ${_o}  Started etcd
+    Should Contain  ${_o}  Starting etcd
+    Should Contain  ${_o}  listening for peers on
+
+Verify Etcd Is Active
     [Documentation]	The etcd service is configured to automatically restart
     ...			after 5 seconds. Verify this happens.
-    Sleep  7  Wait for etcd to be automatically restarted.
     ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-active etcd
     Should Contain  ${_l}  active
 
