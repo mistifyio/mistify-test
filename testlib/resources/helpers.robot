@@ -182,6 +182,13 @@ Learn IP Address For Subnet
     Log Message  \nLearn IP Address: ${_r}
     [Return]  ${_r}
 
+Mark Time
+    [Documentation]  Get the current time.
+    ${_t}=  SSH Run And Get Key Line  HMS:  date +%T
+    Log Message  Time marked at: ${_t}
+    Set Suite Variable  ${marker}  ${_t}
+    [Return]  ${_t}
+
 Learn MAC Address
     [Documentation]	Get the MAC address for a network interface.
 
