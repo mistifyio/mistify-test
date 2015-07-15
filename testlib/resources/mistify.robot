@@ -75,3 +75,9 @@ ${MISTIFY_CLUSTER_NET_MASK_BITS}  24
 
 # Helpers
 ${MISTIFY_JSON_PARSER}		parsejson
+
+*** Keywords ***
+Service ${_service} Should Be ${_state}
+    ${_l}=  SSH Run And Get Key Line  NCD=  systemctl is-active ${_service}
+    Log Message  ${_service} state: \n${_l}
+    Should Contain  ${_l}  ${_state}
