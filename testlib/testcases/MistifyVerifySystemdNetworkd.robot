@@ -33,10 +33,10 @@ Suite Teardown	Release Cluster Container
 *** Variables ***
 
 *** Test Cases ***
-Verify Test Network Unreachable
+Verify Test Network Reachable
     [Setup]	Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
     ${_o}=  SSH Run And Get Output  ping -c 1 ${MISTIFY_CLUSTER_GATEWAY_IP}
-    Should Contain  ${_o}  Network is unreachable
+    Should Not Contain  ${_o}  Network is unreachable
 
 Install Test Configuration
     [Documentation]	Reconfigure and restart the network and verify the
