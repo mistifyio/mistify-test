@@ -10,9 +10,9 @@ ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 *** Keywords ***
 Log Output
     [Arguments]  ${_output}
-    ${_esc}=  Evaluate  chr(int(0x1b))
-    ${_o}=  Replace String  ${_output}  ${_esc}  ESC
-    Log  \nConsole output: \n++++\n${_output}\n----  console=true
+    ${_e}=  Evaluate  chr(int(0x1b))
+    ${_o}=  Replace String  ${_output}  ${_e}  ESC
+    Log  \nConsole output: \n++++\n${_o}\n----  console=true
 
 Log Message
     [Arguments]  ${_message}

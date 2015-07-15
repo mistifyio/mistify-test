@@ -112,13 +112,13 @@ Generate The Node Attribute List
 
 Install Node Attribute List On The Primary Node
     [Tags]	Net-config
-    Attach Screen  @{MISTIFY_CLUSTER_NODES}[0]
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
     ${_of}=  catenate
     ...  cat >/root/nodes.sh << EOF\n
     ...  ${NodesScript}
     ...  \nEOF
     SSH Run  ${_of}
-    Detach Screen
+    Release Node
 
 Install Primary Node Net Config
     [Documentation]  This generates network config files for a cluster.
@@ -128,7 +128,7 @@ Install Primary Node Net Config
     ${_a}=  Get From Dictionary  ${Nodes}  @{MISTIFY_CLUSTER_NODES}[0]
     ${_if}=  Get From Dictionary  ${_a}  if
     ${_ip}=  Get From Dictionary  ${_a}  ip
-    Attach Screen  @{MISTIFY_CLUSTER_NODES}[0]
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
     ${_c}=  catenate
     ...  cat > /root/${_if}.network.test <<EOF\n
     ...  [Match]\n
@@ -158,7 +158,7 @@ Install Primary Node Net Config
     ...  \nEOF
     SSH Run  ${_c}
     SSH Run  cp /etc/resolv.conf resolv.conf.original
-    Detach Screen
+    Release Node
 
 Install Cluster Init Script On The Primary Node
     Copy File To Node  @{MISTIFY_CLUSTER_NODES}[0]
@@ -259,9 +259,10 @@ Restart Node With New MAC Address
     ...  MAC address. This is a workaround for that problem where the VM for
     ...  a node is restarted with the bridge's MAC.
     [Arguments]  ${_n}  ${_uuid}  ${_mac}
-    Attach Screen  ${_n}
     # Be sure the disk image is updated.
-    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]  sync
+    Use Node  ${_n}
+    ssh.Set Client Configuration  timeout=5s
+    SSH Run  sync; echo "File System sync'd"
     Exit VM In Screen
     ssh.Set Client Configuration  timeout=15s
     ssh.Read Until  QEMU: Terminated
@@ -280,5 +281,5 @@ Restart Node With New MAC Address
     ssh.Set Client Configuration  timeout=4m
     ssh.Read Until  nonblocking pool is initialized
     ssh.Set Client Configuration  timeout=3s
-    Detach Screen
+    Release Node
 
