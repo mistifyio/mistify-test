@@ -78,6 +78,9 @@ ${MISTIFY_JSON_PARSER}		parsejson
 
 *** Keywords ***
 Service ${_service} Should Be ${_state}
+    [Documentation]	Uses systemctl to see if the service is in the desired
+    ...			state.
+    ...	This is designed to be used with "Wait Until Keyword Succeeds".
     ${_l}=  SSH Run And Get Key Line  NCD=  systemctl is-active ${_service}
     Log Message  ${_service} state: \n${_l}
     Should Contain  ${_l}  ${_state}
