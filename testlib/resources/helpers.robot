@@ -223,6 +223,21 @@ Login To Mistify
     ${_o}=  ssh.Read Until  ${MISTIFY_PROMPT}
     Should Contain  ${_o}  ${MISTIFY_PROMPT}
     ssh.Set Client Configuration  timeout=3s
+    Fix Serial Console Wrap
+
+Fix Serial Console Wrap
+    [Documentation]  Change console attributes to avoid automatic wrap on a
+    ...              serial console.
+    ...	Serial consoles (ttySx) have annoying habit of attempting to wrap lines
+    ...	automatically which inserts carriage returns into long lines and
+    ...	really confuses tests which are looking for patterns in those long lines.
+    ...	This is a work-around which simply sets the terminal attributes to
+    ...	a large number of rows and columns. This allows a console window to
+    ...	to control the wrap and scroll.
+    ...	Use this keyword after logging in.
+    SSH Run  COLUMNS=1000;LINES=1000;export COLUMNS LINES;
+    SSH Run  stty rows $LINES columns $COLUMNS
+    SSH Run  export TERM=linux
 
 Update Mistify Images
     [Documentation]	Copy the images from a Mistify-OS build to the test
