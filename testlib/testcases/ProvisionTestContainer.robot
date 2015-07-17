@@ -48,7 +48,7 @@ Define Package List
     ...			each other.
     ${packages}=  catenate  SEPARATOR=${SPACE}
     ...  git isc-dhcp-server uml-utilities screen qemu qemu-kvm uuid-runtime
-    ...  curl
+    ...  curl tcpdump
     Set Suite Variable  ${packages}
 
 Update APT Database
