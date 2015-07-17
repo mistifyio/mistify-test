@@ -8,6 +8,10 @@ Library	Collections
 ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 *** Keywords ***
+Get Command Line Options
+    ${ts_setup}=  Get Variable Value  ${SETUP}  none
+    Set Suite Variable  ${ts_setup}
+
 Log Output
     [Arguments]  ${_output}
     ${_e}=  Evaluate  chr(int(0x1b))
@@ -83,6 +87,18 @@ SSH Run And Get Return Code
     ${_r}=  Convert To Integer  ${_r}
     [Return]  ${_r}
 
+Consume Console Output
+    [Documentation]     This consumes and ignores all the console output so
+    ...			the next step can have a console which is in sync.
+    ${_o}=  ssh.Read  delay=0.5s
+    Log Output  ${_o}
+    [Return]  ${_o}
+
+${_file} Should Contain ${_pattern}
+    Log Message  \nSearching ${_file} for "${_pattern}"
+    ${_l}=  SSH Run And Get Key Line  GREP:
+    ...  grep '${_pattern}' ${_file}
+
 Files Should Be Same
     [Arguments]  ${_file1}  ${_file2}
     Log Message  \nComparing: \n\t${_file1}\n\t${_file2}
@@ -97,12 +113,10 @@ Files Should Be Different
     Log Message  The return code is: ${_r}
     Should Not Be Equal As Integers  ${_r}  ${0}
 
-Consume Console Output
-    [Documentation]     This consumes and ignores all the console output so
-    ...			the next step can have a console which is in sync.
-    ${_o}=  ssh.Read  delay=0.5s
-    Log Output  ${_o}
-    [Return]  ${_o}
+${_process} Is Running
+    ${_r}=  SSH Run And Get Return Code  pgrep ${_process}
+    Log Message  The return code is: ${_r}
+    Should Be Equal As Integers  ${_r}  ${0}
 
 Start Screen Session
     [Documentation]	Start a new screen session with a given name.
@@ -182,6 +196,20 @@ Learn IP Address For Subnet
     Log Message  \nLearn IP Address: ${_r}
     [Return]  ${_r}
 
+${_host} Is Responding To Ping
+    ${_o}=  SSH Run And Get Output  ping -c 1 ${_host}
+    Should Contain  ${_o}  1 packets transmitted
+    Should Contain  ${_o}  1 received
+    [Return]  ${_o}
+
+Wait Until Host Responds To Ping
+    [Arguments]  ${_host}  ${_seconds}=10
+    Log Message  Waiting ${_seconds} for ${_host} to respond.
+    Wait Until Keyword Succeeds  ${_seconds} s  1 s  ${_host} Is Responding To Ping
+
+Wait ${_seconds} Seconds Until ${_host} Responds To Ping
+    Wait Until Host Responds To Ping  ${_ip}  ${_seconds}
+
 Mark Time
     [Documentation]  Get the current time.
     ${_t}=  SSH Run And Get Key Line  HMS:  date +%T
@@ -206,25 +234,6 @@ Learn UUID
     Log Message  \nLearn UUID ${_r}
     [Return]  ${_r}
 
-Login To Mistify
-    [Documentation]	Login to Mistify using the current console.
-
-    Consume Console Output
-    ssh.Set Client Configuration  timeout=15s
-    ssh.Write  \r
-    ssh.Read Until  Welcome to Mistify-OS
-    ssh.Write  \r
-    ${_o}=  ssh.Read Until  ${MISTIFY_LOGIN_PROMPT}
-    Should Contain  ${_o}  ${MISTIFY_LOGIN_PROMPT}
-    ssh.Write  ${MISTIFY_USERNAME}
-    ${_o}=  ssh.Read Until  Password:
-    Should Contain  ${_o}  Password:
-    ssh.Write  ${MISTIFY_PASSWORD}
-    ${_o}=  ssh.Read Until  ${MISTIFY_PROMPT}
-    Should Contain  ${_o}  ${MISTIFY_PROMPT}
-    ssh.Set Client Configuration  timeout=3s
-    Fix Serial Console Wrap
-
 Fix Serial Console Wrap
     [Documentation]  Change console attributes to avoid automatic wrap on a
     ...              serial console.
@@ -238,19 +247,4 @@ Fix Serial Console Wrap
     SSH Run  COLUMNS=1000;LINES=1000;export COLUMNS LINES;
     SSH Run  stty rows $LINES columns $COLUMNS
     SSH Run  export TERM=linux
-
-Update Mistify Images
-    [Documentation]	Copy the images from a Mistify-OS build to the test
-    ...			environment.
-    ...
-    ...  This assumes already logged into the test environment.
-
-    Log Message  Updating Mistify Images
-    SSH Run  cd ~
-    ssh.Put File  ${BUILDDIR}/images/${MISTIFY_KERNEL_IMAGE}  images/
-    ssh.Put File  ${BUILDDIR}/images/${MISTIFY_INITRD_IMAGE}  images/
-    ${_o}=  SSH Run And Get Output  ls -l images
-    Log Message  Mistify Images:\n${_o}
-    Should Contain  ${_o}  ${MISTIFY_KERNEL_IMAGE}
-    Should Contain  ${_o}  ${MISTIFY_INITRD_IMAGE}
 

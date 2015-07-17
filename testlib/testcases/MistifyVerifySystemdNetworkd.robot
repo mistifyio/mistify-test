@@ -9,10 +9,6 @@ Documentation	This script performs basic verification that systemd can be used
 ...	sessions are detached.
 ...
 ...	The network is left in a state useable for the cluster tests.
-...
-...	Command line options (passed by testmistify using '-- -v <OPTION>:<value>')
-...	SETUP
-...	  reset		Reset a node to initial states during testsuite setup
 
 Library		String
 Library		Collections
@@ -34,8 +30,8 @@ Suite Teardown	Release Cluster Container
 
 *** Test Cases ***
 Verify Test Network Reachable
-    [Setup]	Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
-    ${_o}=  SSH Run And Get Output  ping -c 1 ${MISTIFY_CLUSTER_GATEWAY_IP}
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
+    ${_o}=  ${MISTIFY_CLUSTER_GATEWAY_IP} Is Responding To Ping
     Should Not Contain  ${_o}  Network is unreachable
 
 Install Test Configuration
@@ -73,10 +69,11 @@ Verify Resolv File Copied
     ...	/etc/resolv.conf
 
 Reconfigure Network And Verify Test Network Reachable
-    SSH Run  systemctl restart systemd-networkd
-    Sleep  10
-    ${_o}=  SSH Run And Get Output  ping -c 1 ${MISTIFY_CLUSTER_GATEWAY_IP}
-    Should Contain  ${_o}  1 packets transmitted
-    Should Contain  ${_o}  1 received
+    Restart Service systemd-networkd
+    ${_t}=  Mark Time
+    Log Message  Network started at: ${_t}
+    Wait Until Host Responds To Ping  ${MISTIFY_CLUSTER_GATEWAY_IP}
+    ${_t}=  Mark Time
+    Log Message  ${MISTIFY_CLUSTER_GATEWAY_IP} responded at: ${_t}
 
 *** Keywords ***

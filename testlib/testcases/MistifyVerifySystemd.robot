@@ -36,28 +36,30 @@ Suite Teardown	Release Cluster Container
 *** Test Cases ***
 Verify Systemd Is Functional
     [Documentation]	Verify systemctl can be used to check service states.
-    [Setup]	Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
+    [Setup]  Get Command Line Options
+    Run Keyword If  '${ts_setup}'=='reset'  Update Mistify Images
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
     ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-system-running
     Should Contain  ${_l}  running
 
 Verify No Failed Services
-    ${_o}=  SSH Run And Get Output  systemctl --no-pager --state=failed
+    ${_o}=  Get List Of failed Services
     Should Not Contain  ${_o}  failed
 
 Verify Etcd Is Running
     [Documentation]	Verify the etcd service is running. This should be
     ...			running following boot.
-    ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-active etcd
-    Should Contain  ${_l}  active
+    Service etcd Should Be active
 
 Verify Etcd Can Be Shutdown
-    [Documentation]	Verify the etcd service can be shutdown using systemctl.
+    [Documentation]	Verify the etcd service can be shutdown and automatically
+    ...			restarted by systemd.
 
     ${_t}=  Mark Time
 
-    SSH Run  systemctl --no-pager stop etcd >/dev/null
-    Sleep  2  Wait for etcd to be automatically restarted.
-    ${_o}=  SSH Run And Get Output  journalctl --no-pager -u etcd --since ${_t}
+    Stop Service etcd
+    Wait 5 Seconds Until Service etcd Is active
+    ${_o}=  Get etcd Log Since ${_t}
     Should Contain  ${_o}  Stopping etcd
     Should Contain  ${_o}  Stopped etcd
     Should Contain  ${_o}  Started etcd
@@ -66,8 +68,7 @@ Verify Etcd Can Be Shutdown
 
 Verify Etcd Is Active
     [Documentation]	The etcd service is configured to automatically restart
-    ...			after 5 seconds. Verify this happens.
-    ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-active etcd
-    Should Contain  ${_l}  active
+    ...			after 5 seconds. Verify this happened.
+    Service etcd Should Be active
 
 *** Keywords ***

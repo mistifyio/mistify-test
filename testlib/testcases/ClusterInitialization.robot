@@ -167,8 +167,11 @@ Install Cluster Init Script On The Primary Node
     ${_o}=  Should Contain  ${_o}  ${clusterinitscript}
 
 Install Json Parser On The Primary Node
+    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]
+    ...  mkdir -p ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
     Copy File To Node  @{MISTIFY_CLUSTER_NODES}[0]
-    ...  ${TESTLIBDIR}/scripts/${MISTIFY_JSON_PARSER}  ${MISTIFY_USER_HOME}
+    ...  ${TESTLIBDIR}/scripts/${MISTIFY_JSON_PARSER}
+    ...  ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
     ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]  ls
     ${_o}=  Should Contain  ${_o}  ${MISTIFY_JSON_PARSER}
 

@@ -10,6 +10,7 @@ Documentation	Common definitions and keywords for tesing Mistify-OS.
 # script. There is no default value for this variable.
 #-
 Resource	${TESTLIBDIR}/resources/helpers.robot
+Resource	${TESTLIBDIR}/resources/mistify-helpers.robot
 
 #+
 # NOTE: The variable TESTBED is passed from the command line by the testmistify
@@ -48,6 +49,7 @@ ${LOCHNESS_CMD_BIN_PATH}  ${BUILDDIR}/tmp/GOPATH/src/github.com/mistifyio/
 @{LOCHNESS_ADMIN_TOOLS}	hv  guest
 
 # For testing Mistify-OS.
+${MISTIFY_TEST_SCRIPTS_DIR}  testlib/scripts
 ${MISTIFY_GUEST_IMAGE}	ubuntu-14.04-server-mistify-amd64-disk1.zfs.gz
 ${MISTIFY_GUEST_IMAGE_URL}	http://builds.mistify.io/guest-images
 
@@ -76,11 +78,3 @@ ${MISTIFY_CLUSTER_NET_MASK_BITS}  24
 # Helpers
 ${MISTIFY_JSON_PARSER}		parsejson
 
-*** Keywords ***
-Service ${_service} Should Be ${_state}
-    [Documentation]	Uses systemctl to see if the service is in the desired
-    ...			state.
-    ...	This is designed to be used with "Wait Until Keyword Succeeds".
-    ${_l}=  SSH Run And Get Key Line  NCD=  systemctl is-active ${_service}
-    Log Message  ${_service} state: \n${_l}
-    Should Contain  ${_l}  ${_state}

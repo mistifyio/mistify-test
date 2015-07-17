@@ -10,9 +10,6 @@ Documentation	This script performs basic verification that etcd can be used
 ...
 ...	The network is left in a state useable for the cluster tests.
 ...
-...	Command line options (passed by testmistify using '-- -v <OPTION>:<value>')
-...	SETUP
-...	  reset		Reset a node to initial states during testsuite setup
 
 Library		String
 Library		Collections
@@ -32,15 +29,16 @@ Suite Teardown	Release Cluster Container
 
 *** Variables ***
 ${etc_data_dir}		/mistify/data/etcd
-${test_data}		This is test data
+${test_data}		some_test_data
 ${test_data_path}	testmistify/TEST_DATA
+${tmp_json_file}	tmp/tmp.json
 
 *** Test Cases ***
 Test is running
     Log Message  OK
 
 Verify Etcd Is Running
-    Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
     ${_o}=  SSH Run And Get Output  ps aux \| grep etcd
     Should Contain  ${_o}  /usr/sbin/etcd
     Should Contain  ${_o}  ${etc_data_dir}
@@ -76,39 +74,25 @@ Verify Etcd Is Listening On Configured Ports
     Is Etcd Listening On Port ${ip} 2379
 
 Verify Data Can Be Set
-    ${_o}=  SSH Run And Get Output  etcdctl set /${test_data_path} '${test_data}'
+    ${_o}=  Set Etcd Data  /${test_data_path}  '${test_data}'
     Should Contain  ${_o}  ${test_data}
 
 Verify Data Can Be Retrieved
-    ${_o}=  SSH Run And Get Output  etcdctl get /${test_data_path}
-    Should Contain  ${_o}  ${test_data}
+    ${_d}=  Get Etcd Data  /${test_data_path}
+    Should Contain  ${_d}  ${test_data}
 
 Verify Data Can Be Retrieved Using Curl
-    SSH Run  rm -f tmp.json
-    ${_c}=  catenate
-    ...  curl http://localhost:4001/v2/keys/${test_data_path} -o tmp.json
-    SSH Run  ${_c}
-    ${_o}=  SSH Run And Get Output  ./${MISTIFY_JSON_PARSER} tmp.json value
-    Should Contain  ${_o}  ${test_data}
+    SSH Run  rm -f ${tmp_json_file}
+    Download Etcd Data  ${test_data_path}  ${tmp_json_file}
+    ${_v}=  Get Json Field  ${tmp_json_file}  value
+    Should Contain  ${_v}  ${test_data}
 
 Verify Data Can Be Retrieved By Another Host
-    SSH Run  rm -f tmp/tmp.json
+    SSH Run  rm -f ${tmp_json_file}
     Release Node
-    ${_c}=  catenate
-    ...  curl http://${ip}:4001/v2/keys/${test_data_path} -o tmp/tmp.json
-    SSH Run  ${_c}
-    ${_o}=  SSH Run And Get Output  testlib/scripts/${MISTIFY_JSON_PARSER} tmp/tmp.json value
-    Should Contain  ${_o}  ${test_data}
+    Download Etcd Data  ${test_data_path}  ${tmp_json_file}  ${ip}
+    ${_v}=  Get Json Field  ${tmp_json_file}  value
+    Should Contain  ${_v}  ${test_data}
 
 *** Keywords ***
-Is Etcd Listening On Port ${_ip} ${_port}
-    Log Message  Verifying etcd is listening at: ${_ip}:${_port}
-    ${_o}=  SSH Run And Get Output  netstat -lpn \| grep etcd \| grep ${_port}
-    Should Contain  ${_o}  ${_ip}:${_port}
-    Should Contain  ${_o}  LISTEN
-    Should Contain  ${_o}  /etcd
 
-Is Etcd Healthy
-    ${_o}=  SSH Run And Get Output  etcdctl cluster-health
-    Log Message  Cluster health: \n${_o}
-    Should Contain  ${_o}  is healthy

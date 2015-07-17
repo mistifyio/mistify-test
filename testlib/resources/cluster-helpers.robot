@@ -192,10 +192,6 @@ Reset All Nodes
     :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
       \  Reset Node  ${_n}
 
-Verify Cluster Container Is Running
-    ${_rc}=	Is Container Running	${containername}
-    Should Be Equal As Integers	${_rc}	1
-
 Get Cluster Container IP Address
     Log To Console	\n
     ${_o}=	Container IP Address	${containername}
@@ -212,6 +208,25 @@ Login To Cluster Container
     Should Contain  ${homedir}  /home/${USER}
     Set Suite Variable  ${homedir}
     Log To Console  Home directory is: ${homedir}
+
+Use Cluster Container
+    ${containername}=	Container Name
+    Set Suite Variable  ${containername}
+    Set Suite Variable  ${rootprompt}  root\@${containername}
+    Set Suite Variable  ${userprompt}  ${USER}\@${containername}
+    Log To Console  containername = ${containername}
+    Log To Console  rootprompt = ${rootprompt}
+    Log To Console  userprompt = ${userprompt}
+    ${_rc}=	Is Container Running	${containername}
+    Should Be Equal As Integers	${_rc}	1
+    Get Cluster Container IP Address
+    Login To Cluster Container
+
+Release Cluster Container
+    Release Node
+    Disconnect From SUT
+    # Leave the container running for other tests which may need the VMs in
+    # their current state.
 
 Use Node
     [Documentation]  This prepares a node for a test run.
@@ -232,24 +247,3 @@ Release Node
     Run Keyword If  '${node}'!='none'  Detach Screen
     Log To Console  Released node: ${node}
     Set Suite Variable  ${node}  none
-
-Use Cluster Container
-    ${ts_setup}=  Get Variable Value  ${SETUP}  none
-    Set Suite Variable  ${ts_setup}
-    ${containername}=	Container Name
-    Set Suite Variable  ${containername}
-    Set Suite Variable  ${rootprompt}  root\@${containername}
-    Set Suite Variable  ${userprompt}  ${USER}\@${containername}
-    Log To Console  containername = ${containername}
-    Log To Console  rootprompt = ${rootprompt}
-    Log To Console  userprompt = ${userprompt}
-    Verify Cluster Container Is Running
-    Get Cluster Container IP Address
-    Login To Cluster Container
-    Run Keyword If  '${ts_setup}'=='reset'  Update Mistify Images
-
-Release Cluster Container
-    Release Node
-    Disconnect From SUT
-    # Leave the container running for other tests which may need the VMs in
-    # their current state.

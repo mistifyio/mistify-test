@@ -9,9 +9,6 @@ Documentation	This script performs basic verification that nconfigd is
 ...	ClusterInitialization.robot. All node VMs are running and all screen
 ...	sessions are detached.
 ...
-...	Command line options (passed by testmistify using '-- -v <OPTION>:<value>')
-...	SETUP
-...	  reset		Reset a node to initial states during testsuite setup
 
 Library		String
 Library		Collections
@@ -32,53 +29,36 @@ Suite Teardown	Release Cluster Container
 *** Variables ***
 
 *** Test Cases ***
-Get Node Informatin
+Get Node Information
     Collect Attributes
-    Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
 
 Is Nconfigd Active
     [Documentation]	Verify nconfigd is active.
-    ${_l}=  SSH Run And Get Key Line  NCD=
-    ...  systemctl --no-pager is-active nconfigd
     Service nconfigd Should Be active
 
 Can Nconfigd Be Shutdown
     [Documentation]	Verify the nconfigd service can be shutdown using systemctl.
-    ${_c}=  catenate
-    ...	systemctl stop nconfigd >/dev/null;
-    SSH Run   systemctl stop nconfigd >/dev/null
+    Stop Service nconfigd
     Wait Until Keyword Succeeds  3 s  1 s  Service nconfigd Should Be inactive
 
 Can Nconfigd Be Configured
     [Documentation]	Reconfigure nconfigd using etcdctl and verify the change
     ...			takes effect.
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[0]  dhcpd
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[0]  dns
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[0]  cbootstrapd
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[0]  etcd
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[0]  tftpd
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[1]  dns
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[1]  etcd
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[2]  dns
-    Enable Nconfigd For Service  @{MISTIFY_CLUSTER_NODES}[2]  etcd
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[0]  dhcpd
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[0]  dns
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[0]  cbootstrapd
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[0]  etcd
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[0]  tftpd
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[1]  dns
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[1]  etcd
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[2]  dns
+    Enable Hypervisor For Service  @{MISTIFY_CLUSTER_NODES}[2]  etcd
 
 Can Nconfigd Be Restarted
     [Documentation]	Verify the nconfigd service can be restarted using systemctl.
-    SSH Run   systemctl start nconfigd >/dev/null
+    Start Service nconfigd
     Wait Until Keyword Succeeds  45 s  1 s  Service nconfigd Should Be active
 
 *** Keywords ***
-Enable Nconfigd For Service
-    [Arguments]  ${_node}  ${_service}
-    ${_u}=  Get Node UUID  ${_node}
-    SSH Run  etcdctl set /lochness/hypervisors/${_u}/config/${_service} true
-    Check Service State  ${_node}  ${_service}
-
-Check Service State
-    [Arguments]  ${_node}  ${_service}
-    ${_u}=  Get Node UUID  ${_node}
-    ${_o}=  SSH Run And Get Key Line  VAL:
-    ...  etcdctl get /lochness/hypervisors/${_u}/config/${_service}
-    Should Contain  ${_o}  true
-    Log Message  Service state: ${_node} ${_service} ${_o}
 
