@@ -172,7 +172,8 @@ Install Json Parser On The Primary Node
     Copy File To Node  @{MISTIFY_CLUSTER_NODES}[0]
     ...  ${TESTLIBDIR}/scripts/${MISTIFY_JSON_PARSER}
     ...  ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
-    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]  ls
+    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]
+    ...  ls ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
     ${_o}=  Should Contain  ${_o}  ${MISTIFY_JSON_PARSER}
 
 Restart Nodes
