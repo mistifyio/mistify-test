@@ -117,12 +117,7 @@ Download Guest Image
     Should Contain  ${_o}  ${MISTIFY_GUEST_IMAGE}
 
 Copy Mistify Images To Container
-    SSH Run  cd ~
-    ssh.Put File  ${BUILDDIR}/images/${MISTIFY_KERNEL_IMAGE}  images/
-    ssh.Put File  ${BUILDDIR}/images/${MISTIFY_INITRD_IMAGE}  images/
-    ${_o}=  SSH Run And Get Output  ls images
-    Should Contain  ${_o}  ${MISTIFY_KERNEL_IMAGE}
-    Should Contain  ${_o}  ${MISTIFY_INITRD_IMAGE}
+    Update Mistify Images
 
 Copy Helper Scripts To Container
     ssh.Put File  scripts/*  scripts/
