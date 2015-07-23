@@ -99,15 +99,6 @@ Copy Helper Scripts To Container
     Should Contain  ${_o}  start-vm
     Should Contain  ${_o}  vm-network
 
-Copy Admin Tools To Container
-    [Documentation]	A couple of tools are needed in the container for
-    ...			administering a cluster.
-    :FOR  ${_t}  IN  @{LOCHNESS_ADMIN_TOOLS}
-      \  ${_f}=  catenate
-      \  ...  ${LOCHNESS_CMD_BIN_PATH}/${_t}/${_t}
-      \  Log To Console  Copying ${_f} to container bin.
-      \  ssh.Put File  ${_f}  bin/
-
 Configure Network For VMs
     [Documentation]	This creates the bridge and tunnel devices for running
     ...			Mistify-OS in containers. In addition, the dhcp server
@@ -204,7 +195,7 @@ Teardown Testsuite
 Verify Current Build
     [Documentation]	Verify the Mistify-OS directory exists and a build has
     ...			completed.
-    [Tags]  update-lochness
+    # [Tags]  update-lochness
     OperatingSystem.File Should Exist  ${MISTIFYOSDIR}/buildgopackage
     ...	msg=The Mistify-OS script "buildgopackage" does not exist at:\n${MISTIFYOSDIR}
     ${_c}=  catenate
@@ -219,7 +210,7 @@ Verify Current Build
 Build The Lochness Admin Tools
     [Documentation]  Build the tools needed to administer a Mistify-OS cluster.
     ...	This uses the build in ${BUILDDIR} to determine the version.
-    [Tags]  update-lochness
+    # [Tags]  update-lochness
     :FOR  ${_t}  IN  @{LOCHNESS_ADMIN_TOOLS}
       \  ${_c}=  catenate  SEPARATOR=${SPACE}
       \  ...  cd ${MISTIFYOSDIR} &&
@@ -229,4 +220,13 @@ Build The Lochness Admin Tools
       \  ${_rc}  ${_o}=  Run And Return Rc And Output  ${_c}
       \  Should Be Equal As Integers  ${_rc}  0
       \  Log To Console  ${_o}
+
+Copy Admin Tools To Container
+    [Documentation]	A couple of tools are needed in the container for
+    ...			administering a cluster.
+    :FOR  ${_t}  IN  @{LOCHNESS_ADMIN_TOOLS}
+      \  ${_f}=  catenate
+      \  ...  ${LOCHNESS_CMD_BIN_PATH}/${_t}/${_t}
+      \  Log To Console  Copying ${_f} to container bin.
+      \  ssh.Put File  ${_f}  bin/
 
