@@ -32,35 +32,6 @@ ${httpserverdir}	http
 ${guestimagedir}	guest-images
 
 *** Test Cases ***
-Verify Current Build
-    [Documentation]	Verify the Mistify-OS directory exists and a build has
-    ...			completed.
-    [Tags]  update-lochness
-    OperatingSystem.File Should Exist  ${MISTIFYOSDIR}/buildgopackage
-    ...	msg=The Mistify-OS script "buildgopackage" does not exist at:\n${MISTIFYOSDIR}
-    ${_c}=  catenate
-    ...	ls -d ${BUILDDIR}/build/lochness-* \| grep -v ansible \| cut -d '-' -f 2
-    ${_v}=  Run  ${_c}
-    Log Message  Lochness version is: ${_v}
-    Set Suite Variable  ${lochnessversion}  ${_v}
-    Set Suite Variable  ${lochnesscmdpath}  ${BUILDDIR}/build/lochness-${lochnessversion}/cmd
-    OperatingSystem.Directory Should Exist  ${lochnesscmdpath}
-    ...	msg=The Lochness cmd directory does not exist at:\n${lochnesscmdpath}
-
-Build The Lochness Admin Tools
-    [Documentation]  Build the tools needed to administer a Mistify-OS cluster.
-    ...	This uses the build in ${BUILDDIR} to determine the version.
-    [Tags]  update-lochness
-    :FOR  ${_t}  IN  @{LOCHNESS_ADMIN_TOOLS}
-      \  ${_c}=  catenate  SEPARATOR=${SPACE}
-      \  ...  cd ${MISTIFYOSDIR} &&
-      \  ...  ./buildgopackage
-      \  ...  --gopackagedir  ${lochnesscmdpath}/${_t}
-      \  ...  --gopackagename  ${_t}
-      \  ${_rc}  ${_o}=  Run And Return Rc And Output  ${_c}
-      \  Should Be Equal As Integers  ${_rc}  0
-      \  Log To Console  ${_o}
-
 Verify Container Is Running
     ${_rc}=	Is Container Running	${containername}
     Should Be Equal As Integers	${_rc}	1
@@ -228,4 +199,34 @@ Setup Testsuite
 
 Teardown Testsuite
     Disconnect From SUT
+
+###### Disabled tests ######
+Verify Current Build
+    [Documentation]	Verify the Mistify-OS directory exists and a build has
+    ...			completed.
+    [Tags]  update-lochness
+    OperatingSystem.File Should Exist  ${MISTIFYOSDIR}/buildgopackage
+    ...	msg=The Mistify-OS script "buildgopackage" does not exist at:\n${MISTIFYOSDIR}
+    ${_c}=  catenate
+    ...	ls -d ${BUILDDIR}/build/lochness-* \| grep -v ansible \| cut -d '-' -f 2
+    ${_v}=  Run  ${_c}
+    Log Message  Lochness version is: ${_v}
+    Set Suite Variable  ${lochnessversion}  ${_v}
+    Set Suite Variable  ${lochnesscmdpath}  ${BUILDDIR}/build/lochness-${lochnessversion}/cmd
+    OperatingSystem.Directory Should Exist  ${lochnesscmdpath}
+    ...	msg=The Lochness cmd directory does not exist at:\n${lochnesscmdpath}
+
+Build The Lochness Admin Tools
+    [Documentation]  Build the tools needed to administer a Mistify-OS cluster.
+    ...	This uses the build in ${BUILDDIR} to determine the version.
+    [Tags]  update-lochness
+    :FOR  ${_t}  IN  @{LOCHNESS_ADMIN_TOOLS}
+      \  ${_c}=  catenate  SEPARATOR=${SPACE}
+      \  ...  cd ${MISTIFYOSDIR} &&
+      \  ...  ./buildgopackage
+      \  ...  --gopackagedir  ${lochnesscmdpath}/${_t}
+      \  ...  --gopackagename  ${_t}
+      \  ${_rc}  ${_o}=  Run And Return Rc And Output  ${_c}
+      \  Should Be Equal As Integers  ${_rc}  0
+      \  Log To Console  ${_o}
 
