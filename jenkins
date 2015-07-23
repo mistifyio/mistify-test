@@ -29,6 +29,9 @@ Usage: $0 [options] [-- testmistifyoptions]
         This is saved in the file:
         $testmistifystatedir/mistifytestbranch
         [mistifytestbranch=$mistifytestbranch]
+    --testoptions "<options>"
+        Options to be passed directly to the test scripts. This is not saved.
+        The job needs to be configured to accept a parameter named "test_options".
     -- <testmistifyoptions>
         Anything following the "--" is passed directly to the Jenkins server.
         This can be additional options to pass to a script or a complete
@@ -60,6 +63,7 @@ a=`getopt -l "\
 jenkins:,\
 jenkinsjob:,\
 mistifytestbranch:,\
+testoptions:,\
 resetdefaults,\
 verbose,\
 dryrun,\
@@ -90,6 +94,10 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--mistifytestbranch)
 	    mistifytestbranch=$2
+	    shift
+	    ;;
+	--testoptions)
+	    testoptions=$2
 	    shift
 	    ;;
 	--resetdefaults)
@@ -141,6 +149,12 @@ if [ -n "$testmistifyoptions" ]; then
   params="&testmistify_options="
   params+=`echo $testmistifyoptions | sed 's/ /%20/g'`
   message "Adding Jenkins parameters: $params"
+fi
+
+if [ -n "$testoptions" ]; then
+  message "Test options are: $testoptions"
+  params+="&test_options="
+  params+=`echo $testoptions | sed 's/ /%20/g'`
 fi
 
 jenkinscommand="wget -O /dev/null $jenkins/job/$jenkinsjob/buildWithParameters?token=buildmistify&mistify_test_branch=$mistifytestbranch$params"
