@@ -36,8 +36,6 @@ Suite Teardown	Release Cluster Container
 *** Test Cases ***
 Verify Systemd Is Functional
     [Documentation]	Verify systemctl can be used to check service states.
-    [Setup]  Get Command Line Options
-    Run Keyword If  '${ts_setup}'=='reset'  Update Mistify Images
     Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
     ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-system-running
     Should Contain  ${_l}  running
@@ -58,17 +56,30 @@ Verify Etcd Can Be Shutdown
     ${_t}=  Mark Time
 
     Stop Service etcd
-    Wait 5 Seconds Until Service etcd Is active
     ${_o}=  Get etcd Log Since ${_t}
     Should Contain  ${_o}  Stopping etcd
     Should Contain  ${_o}  Stopped etcd
-    Should Contain  ${_o}  Started etcd
-    Should Contain  ${_o}  Starting etcd
-    Should Contain  ${_o}  listening for peers on
 
-Verify Etcd Is Active
-    [Documentation]	The etcd service is configured to automatically restart
-    ...			after 5 seconds. Verify this happened.
-    Service etcd Should Be active
+Verify Etcd Is Inactive
+    [Documentation]	The etcd service should be inactive after using systemd
+    ...			to stop it.
+
+    Wait 10 Seconds Until Service etcd Is inactive
+    Service etcd Should Be inactive
+    ${_o}=  Get etcd Log Since ${marker}
+    Should Not Contain  ${_o}  Started etcd
+    Should Not Contain  ${_o}  Starting etcd
+
+Verify Etcd Becomes Active When Started
+    [Documentation]	The etcd service should be active shortly after using
+    ...			systemd to start it.
+
+    ${_t}=  Mark Time
+
+    Start Service etcd
+    Wait 10 Seconds Until Service etcd Is active
+    ${_o}=  Get etcd Log Since ${_t}
+    Should Contain  ${_o}  Starting etcd
+    Should Contain  ${_o}  Started etcd
 
 *** Keywords ***
