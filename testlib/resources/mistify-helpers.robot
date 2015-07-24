@@ -23,7 +23,7 @@ Service ${_service} Should Be ${_state}
     ...	This is designed to be used with "Wait Until Keyword Succeeds".
     ${_l}=  SSH Run And Get Key Line  NCD=  systemctl is-active ${_service}
     Log Message  ${_service} state: \n${_l}
-    Should Contain  ${_l}  ${_state}
+    Should Be Equal  ${_l}  ${_state}
 
 Service ${_service} Should Not Be ${_state}
     [Documentation]	Uses systemctl to see if the service is NOT in the
@@ -31,7 +31,7 @@ Service ${_service} Should Not Be ${_state}
     ...	This is designed to be used with "Wait Until Keyword Succeeds".
     ${_l}=  SSH Run And Get Key Line  NCD=  systemctl is-active ${_service}
     Log Message  ${_service} state: \n${_l}
-    Should Not Contain  ${_l}  ${_state}
+    Should Not Be Equal  ${_l}  ${_state}
 
 Wait ${_seconds} Seconds Until Service ${_service} Is ${_state}
     Wait Until Keyword Succeeds  ${_seconds} s  1 s
