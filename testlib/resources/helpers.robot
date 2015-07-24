@@ -11,6 +11,9 @@ ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 Get Command Line Options
     ${ts_setup}=  Get Variable Value  ${SETUP}  none
     Set Suite Variable  ${ts_setup}
+    Log Message  Option ts_setup = ${ts_setup}
+    ${ts_imagedir}=  Get Variable Value  ${IMAGEDIR}  none
+    Log Message  Option ts_imagedir = ${ts_imagedir}
 
 Log Output
     [Arguments]  ${_output}
