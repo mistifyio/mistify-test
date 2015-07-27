@@ -157,7 +157,7 @@ if [ -n "$testoptions" ]; then
   params+=`echo $testoptions | sed 's/ /%20/g'`
 fi
 
-jenkinscommand="wget -O /dev/null $jenkins/job/$jenkinsjob/buildWithParameters?token=buildmistify&mistify_test_branch=$mistifytestbranch$params"
+jenkinscommand="wget -O /dev/null $jenkins/job/$jenkinsjob/buildWithParameters?token=testmistify&mistify_test_branch=$mistifytestbranch$params"
 
 if [ -n "$dryrun" ]; then
   message "Just a test run -- not building."
