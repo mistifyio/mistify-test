@@ -210,7 +210,6 @@ Login To Cluster Container
     Log To Console  Home directory is: ${homedir}
 
 Use Cluster Container
-    Get Command Line Options
     ${containername}=	Container Name
     Set Suite Variable  ${containername}
     Set Suite Variable  ${rootprompt}  root\@${containername}
@@ -222,7 +221,6 @@ Use Cluster Container
     Should Be Equal As Integers	${_rc}	1
     Get Cluster Container IP Address
     Login To Cluster Container
-    Run Keyword If  '${ts_setup}'=='reset'  Update Mistify Images
 
 Release Cluster Container
     Release Node
