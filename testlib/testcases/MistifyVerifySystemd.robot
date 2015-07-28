@@ -36,7 +36,7 @@ Suite Teardown	Release Cluster Container
 *** Test Cases ***
 Verify Systemd Is Functional
     [Documentation]	Verify systemctl can be used to check service states.
-    Use Node  @{MISTIFY_CLUSTER_NODES}[0]  ${ts_setup}
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
     ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-system-running
     Should Contain  ${_l}  running
 
