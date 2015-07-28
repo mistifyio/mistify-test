@@ -29,6 +29,10 @@ Usage: $0 [options] [-- testmistifyoptions]
         This is saved in the file:
         $testmistifystatedir/mistifytestbranch
         [mistifytestbranch=$mistifytestbranch]
+    --jenkinsuser <user>[:<password>]
+        Use to start a build on a Jenkins server which requires authentication.
+        This is the user name and an optional password.
+        This is not saved.
     --testoptions "<options>"
         Options to be passed directly to the test scripts. This is not saved.
         The job needs to be configured to accept a parameter named "test_options".
@@ -63,6 +67,8 @@ a=`getopt -l "\
 jenkins:,\
 jenkinsjob:,\
 mistifytestbranch:,\
+jenkinsuser:,\
+jenkinspassword:,\
 testoptions:,\
 resetdefaults,\
 verbose,\
@@ -94,6 +100,10 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--mistifytestbranch)
 	    mistifytestbranch=$2
+	    shift
+	    ;;
+	--jenkinsuser)
+	    jenkinsuser=$2
 	    shift
 	    ;;
 	--testoptions)
@@ -157,7 +167,14 @@ if [ -n "$testoptions" ]; then
   params+=`echo $testoptions | sed 's/ /%20/g'`
 fi
 
-jenkinscommand="wget -O /dev/null $jenkins/job/$jenkinsjob/buildWithParameters?token=testmistify&mistify_test_branch=$mistifytestbranch$params"
+if [ -n "$jenkinsuser" ]; then
+  auth=" --user $jenkinsuser"
+fi
+
+jenkinscommand="curl -XPOST \"$jenkins/job/$jenkinsjob/buildWithParameters"
+jenkinscommand+="?token=testmistify"
+jenkinscommand+="&mistify_test_branch=$mistifytestbranch$params\""
+jenkinscommand+=$auth
 
 if [ -n "$dryrun" ]; then
   message "Just a test run -- not building."
@@ -165,7 +182,7 @@ fi
 
 message "Triggering a remote build on Jenkins server: $jenkins"
 message "The branch is: $mistfiytestbranch"
-$dryrun $jenkinscommand
+$dryrun eval $jenkinscommand
 if [ $? -gt 0 ]; then
   error The Jenkins server is not running at the URL or did not accept the job.
   exit 1
