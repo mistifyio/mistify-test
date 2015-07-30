@@ -64,7 +64,7 @@ Update APT Database
     ssh.Write  ls /
     ${_o}=  ssh.Read Until  ${prompt}  loglevel=INFO
     Log To Console  \nUpdating the package database.
-    ssh.Set Client Configuration  timeout=1m
+    ssh.Set Client Configuration  timeout=3m
     ssh.Write  apt-get update
     ${_o}=  ssh.Read Until  ${prompt}  loglevel=INFO
 
