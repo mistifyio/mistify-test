@@ -18,6 +18,7 @@ Library		OperatingSystem
 
 *** Variables ***
 ${LXC_BRIDGE}	lxcbr0
+${LXC_CONTAINER_DEFAULT_INTERFACE}  eth0
 
 *** Keywords ***
 Container Name

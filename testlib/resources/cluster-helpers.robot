@@ -116,7 +116,7 @@ Reboot Node
     Attach Screen  ${_n}
     ssh.Write  reboot
     ssh.Set Client Configuration  timeout=4m
-    ${_o}=  ssh.Read Until  nonblocking pool is initialized
+    ${_o}=  ssh.Read Until  random: nonblocking
     ssh.Set Client Configuration  timeout=3s
 
     Detach Screen
@@ -148,9 +148,13 @@ Start Node
     ssh.Write  ~/tmp/start-${_n}
     ssh.Set Client Configuration  timeout=4m
     Log To Console  \nWaiting for node ${_n} to boot.
-    ${_o}=  ssh.Read Until  nonblocking pool is initialized
+    # This is emitted some time after a boot (typically 30 to 40 seconds)
+    # Wait until this occurs to avoid having it mess up normal output.
     ssh.Set Client Configuration  timeout=3s
-
+    ${_o}=  ssh.Read Until  random: nonblocking
+    ${_o}=  SSH Run And Get Output  \r
+    Should Contain  ${_o}  ${MISTIFY_GREETING}
+    Should Contain  ${_o}  login:
     Detach Screen
     [Return]  ${_o}
 
@@ -191,6 +195,29 @@ Reset All Nodes
 
     :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
       \  Reset Node  ${_n}
+
+Enable Routing To External Network For Nodes
+    [Documentation]	For nodes to access the internet some routing/masquerading
+    ...			is needed.
+    ...  NOTE: This is not currently being used but is intended to document part
+    ...  of what needs to be done.
+
+    ${_c}=  catenate
+    ...  sudo iptables -t nat -A POSTROUTING
+    ...  -s ${MISTIFY_BRIDGE_SUBNET}.0/${MISTIFY_NET_MASK_BITS}
+    ...  -o ${LXC_CONTAINER_DEFAULT_INTERFACE} -j MASQUERADE
+    ${_o}=  SSH Run And Get Output  ${_c}
+
+Disable Routing To External Network For Nodes
+    [Documentation]	This disables the routing to the internet for nodes.
+    ...  NOTE: This is not currently being used but is intended to document part
+    ...  of what needs to be done.
+
+    ${_c}=  catenate
+    ...  sudo iptables -t nat -D POSTROUTING
+    ...  -s ${MISTIFY_BRIDGE_SUBNET}.0/${MISTIFY_NET_MASK_BITS}
+    ...  -o ${LXC_CONTAINER_DEFAULT_INTERFACE} -j MASQUERADE
+    ${_o}=  SSH Run And Get Output  ${_c}
 
 Get Cluster Container IP Address
     Log To Console	\n

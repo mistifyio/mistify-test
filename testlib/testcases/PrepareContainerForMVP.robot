@@ -158,7 +158,7 @@ Start The Nodes
       \  ...  --uuid `uuidgen`
       \  ...  --mac ${MISTIFY_DEFAULT_MAC}${_m}
       \  ssh.Write  ${_c}
-      \  ssh.Read Until  nonblocking pool is initialized
+      \  ssh.Read Until  random: nonblocking
       \  Detach Screen
     ssh.Set Client Configuration  timeout=3s
 

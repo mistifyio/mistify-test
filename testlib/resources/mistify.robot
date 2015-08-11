@@ -35,6 +35,7 @@ ${MISTIFY_PROMPT}	${MISTIFY_USERNAME}@
 # When running in a development machine in a VM the prompt is localhost.
 ${MISTIFY_VM_PROMPT}	root@localhost
 
+${MISTIFY_GREETING}	Welcome to Mistify-OS
 ${MISTIFY_LOGIN_PROMPT}	login:
 
 # To clone the Mistify-OS repo for building.

@@ -283,7 +283,7 @@ Restart Node With New MAC Address
     Log To Console  Restarting VM: ${_c}
     ssh.Write  ${_c}
     ssh.Set Client Configuration  timeout=4m
-    ssh.Read Until  nonblocking pool is initialized
+    ssh.Read Until  random: nonblocking
     ssh.Set Client Configuration  timeout=3s
     Release Node
 
