@@ -146,12 +146,12 @@ Start Node
     Attach Screen  ${_n}
 
     ssh.Write  ~/tmp/start-${_n}
-    ssh.Set Client Configuration  timeout=4m
     Log To Console  \nWaiting for node ${_n} to boot.
     # This is emitted some time after a boot (typically 30 to 40 seconds)
     # Wait until this occurs to avoid having it mess up normal output.
-    ssh.Set Client Configuration  timeout=3s
+    ssh.Set Client Configuration  timeout=4m
     ${_o}=  ssh.Read Until  random: nonblocking
+    ssh.Set Client Configuration  timeout=3s
     ${_o}=  SSH Run And Get Output  \r
     Should Contain  ${_o}  ${MISTIFY_GREETING}
     Should Contain  ${_o}  login:
