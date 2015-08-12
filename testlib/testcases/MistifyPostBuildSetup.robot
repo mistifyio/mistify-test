@@ -50,7 +50,7 @@ The DHCP Server Is Running
     Should Contain  ${_o}  testmistify/vm-network-dhcpd-pid
 
 The HTTP Server Is Running To Serve Guest Images
-    ${_o}=  SSH Run And Get Output  HTTP:  ps aux \| grep Simple
+    ${_o}=  SSH Run And Get Key Line  HTTP:  ps aux \| grep Simple
     Should Contain  ${_o}  SimpleHTTPServer
 
 The Screen Sessions Exist And Are Detached
