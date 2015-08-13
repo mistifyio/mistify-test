@@ -9,7 +9,7 @@ ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 *** Keywords ***
 Get Command Line Options
-    [Documenation]  Robot Framework (pybot) support passing variables to test
+    [Documentation]  Robot Framework (pybot) support passing variables to test
     ...  scripts on the command line. This looks for some specific options
     ...  which are intended to setup a test run. Global variables are created
     ...  for these options. They default to "none" if not passed on the command
