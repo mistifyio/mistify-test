@@ -65,7 +65,7 @@ Container List
     [Return]	${_o}
 
 Start Container
-    [Documenation]  Starts an existing container.
+    [Documentation]  Starts an existing container.
     [Arguments]	${_container_name}
     ${_rc}=	Run And Return Rc	lxc-start -d -n ${_container_name}
     # Some time is needed for the container to obtain an IP address.
