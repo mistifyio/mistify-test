@@ -9,6 +9,19 @@ ${ssh_options}	-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 *** Keywords ***
 Get Command Line Options
+    [Documenation]  Robot Framework (pybot) support passing variables to test
+    ...  scripts on the command line. This looks for some specific options
+    ...  which are intended to setup a test run. Global variables are created
+    ...  for these options. They default to "none" if not passed on the command
+    ...  line.
+    ...  The variables are and their intendende semantics are:
+    ...    SETUP    Indicate the actions to take for setting up a new test run.
+    ...        reset = Reset to initial states for a test run.
+    ...                Refer to other tests scripts to determine what actually
+    ...                happens when this is used.
+    ...    IMAGEDIR Where images to be tested are located. e.g. This is used
+    ...             to indicate where the Mistify-OS kernel and initrd images
+    ...             are located.
     ${ts_setup}=  Get Variable Value  ${SETUP}  none
     Set Suite Variable  ${ts_setup}
     Log Message  Option ts_setup = ${ts_setup}
@@ -16,12 +29,16 @@ Get Command Line Options
     Log Message  Option ts_imagedir = ${ts_imagedir}
 
 Log Output
+    [Documentation]  Writes to the test log file and the output is delimited by
+    ...  the pattern "++++" at the start and "----" at the end. The output is
+    ...  also sent to the console.
     [Arguments]  ${_output}
     ${_e}=  Evaluate  chr(int(0x1b))
     ${_o}=  Replace String  ${_output}  ${_e}  ESC
     Log  \nConsole output: \n++++\n${_o}\n----  console=true
 
 Log Message
+    [Documentation]  Writes the message to the log file and to the console.
     [Arguments]  ${_message}
     Log  \n${_message}  console=true
 
@@ -63,8 +80,10 @@ SSH Run And Get First Line
     [Return]  ${_l}
 
 SSH Run And Get Key Line
-    [Documentation]	This runs the command using a key to indicate the output
-    ...			and returns the line containing the key.
+    [Documentation]  This runs the command using a key to indicate the output
+    ...  and returns the line containing the key. Using a key helps separate
+    ...  the desired output from other previous or following output (e.g.
+    ...  prompts).
     [Arguments]	${_key}  ${_command}
     ${_o}=  SSH Run And Get Output  echo ${_key}`${_command}`
     ${_l}=  Get Lines Containing String  ${_o}  ${_key}
@@ -98,11 +117,16 @@ Consume Console Output
     [Return]  ${_o}
 
 ${_file} Should Contain ${_pattern}
+    [Documentation]  Uses grep to scan a file for a given pattern and returns
+    ...  the output. This is intended to be used when the output will be a
+    ...  single line.
     Log Message  \nSearching ${_file} for "${_pattern}"
     ${_l}=  SSH Run And Get Key Line  GREP:
     ...  grep '${_pattern}' ${_file}
 
 Files Should Be Same
+    [Documentation]  Uses diff to compare two files and verify they are the
+    ...  same by checking the diff return code.
     [Arguments]  ${_file1}  ${_file2}
     Log Message  \nComparing: \n\t${_file1}\n\t${_file2}
     ${_r}=  SSH Run And Get Return Code  diff ${_file1} ${_file2}
@@ -110,6 +134,8 @@ Files Should Be Same
     Should Be Equal As Integers  ${_r}  ${0}
 
 Files Should Be Different
+    [Documentation]  Uses diff to compare two files and verify they are NOT
+    ...  the same by checking the diff return code.
     [Arguments]  ${_file1}  ${_file2}
     Log Message  \nComparing: \n\t${_file1}\n\t${_file2}
     ${_r}=  SSH Run And Get Return Code  diff ${_file1} ${_file2}
@@ -117,6 +143,7 @@ Files Should Be Different
     Should Not Be Equal As Integers  ${_r}  ${0}
 
 ${_process} Is Running
+    [Documentation]  Uses pgrep to verify a given process is running.
     ${_r}=  SSH Run And Get Return Code  pgrep ${_process}
     Log Message  The return code is: ${_r}
     Should Be Equal As Integers  ${_r}  ${0}
@@ -138,8 +165,6 @@ Attach Screen
 Detach Screen
     [Documentation]	Detach from the active screen.
     ...
-    ...	This is provided because of the funky control character handling.
-    ...
     ...  NOTE: This assumes that the session is active.
     Log Message  \nDetaching from screen session.
     ${_c_a}=  Evaluate  chr(int(1))
@@ -155,11 +180,7 @@ Exit VM In Screen
     ssh.Write Bare  ${_c_a}ax
 
 Exit VM
-    [Documentation]	Exit a running VM.
-    ...
-    ...	This is provided because of the funky control character handling.
-    ...
-    ...  NOTE: This assumes the VM is actually running inside a screen session.
+    [Documentation]	Exit a running VM (outside a screen session).
     ${_c_a}=  Evaluate  chr(int(1))
     ssh.Write Bare  ${_c_a}x
 
@@ -187,7 +208,7 @@ Learn IP Address For Subnet
     [Documentation]	Get the IP address for a subnet on a given interface.
     ...
     ...  An interface can have more than one IP address. This returns the IP
-    ...  IP address for a subnet.
+    ...  IP address for a given subnet.
     [Arguments]	${_interface}  ${_subnet}
     ${_c}=  catenate
     ...  ip addr show dev ${_interface} \| grep ${_subnet}
@@ -200,28 +221,34 @@ Learn IP Address For Subnet
     [Return]  ${_r}
 
 ${_host} Is Responding To Ping
+    [Documentation]  Uses ping to verify a given host is responding.
     ${_o}=  SSH Run And Get Output  ping -c 1 ${_host}
     Should Contain  ${_o}  1 packets transmitted
     Should Contain  ${_o}  1 received
     [Return]  ${_o}
 
 Wait Until Host Responds To Ping
+    [Documentation]  Tries to ping a given host until the host responds or a
+    ...  timeout occurs.
     [Arguments]  ${_host}  ${_seconds}=10
     Log Message  Waiting ${_seconds} for ${_host} to respond.
     Wait Until Keyword Succeeds  ${_seconds} s  1 s  ${_host} Is Responding To Ping
 
 Wait ${_seconds} Seconds Until ${_host} Responds To Ping
+    [Documentation]  A more plain language form of "Wait Until Host Responds To Ping".
     Wait Until Host Responds To Ping  ${_ip}  ${_seconds}
 
 Mark Time
-    [Documentation]  Get the current time.
+    [Documentation]  Returns the current time and sets the global varaible,
+    ...  marker, to the current time. This is handy when looking at events
+    ...  since a certain time.
     ${_t}=  SSH Run And Get Key Line  HMS:  date +%T
     Log Message  Time marked at: ${_t}
     Set Suite Variable  ${marker}  ${_t}
     [Return]  ${_t}
 
 Learn MAC Address
-    [Documentation]	Get the MAC address for a network interface.
+    [Documentation]	Returns the MAC address for a network interface.
 
     [Arguments]	${_interface}
     ${_c}=  catenate
@@ -231,7 +258,7 @@ Learn MAC Address
     [Return]  ${_r}
 
 Learn UUID
-    [Documentation]	Get the UUDI for the current console device.
+    [Documentation]	Returns the UUDI for the current console device.
 
     ${_r}=  SSH Run And Get Key Line  UUID=  hostname
     Log Message  \nLearn UUID ${_r}
@@ -240,13 +267,14 @@ Learn UUID
 Fix Serial Console Wrap
     [Documentation]  Change console attributes to avoid automatic wrap on a
     ...              serial console.
-    ...	Serial consoles (ttySx) have annoying habit of attempting to wrap lines
-    ...	automatically which inserts carriage returns into long lines and
-    ...	really confuses tests which are looking for patterns in those long lines.
-    ...	This is a work-around which simply sets the terminal attributes to
-    ...	a large number of rows and columns. This allows a console window to
-    ...	to control the wrap and scroll.
-    ...	Use this keyword after logging in.
+    ...  Serial consoles (ttySx) have annoying habit of attempting to wrap lines
+    ...  automatically which inserts carriage returns and escape sequences into long lines and
+    ...  long lines which wrap to the next line. This  really confuses tests
+    ...  which are looking for patterns in those long lines.
+    ...  This is a work-around which simply sets the terminal attributes to
+    ...  a large number of rows and columns. This allows a console window to
+    ...  to control the wrap and scroll.
+    ...  Use this keyword after logging in.
     SSH Run  COLUMNS=1000;LINES=1000;export COLUMNS LINES;
     SSH Run  stty rows $LINES columns $COLUMNS
     SSH Run  export TERM=linux

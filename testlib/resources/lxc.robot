@@ -36,10 +36,17 @@ Container Name
     [Return]  ${_n}
 
 Test LXC Is Installed
+    [Documentation]  Verifies that lxc is installed.
     ${_o}=	Run	lxc-create --help
     Should Contain	${_o}	lxc-create creates a container
 
 Create Unprivileged Container
+    [Documentation]  Unprivileged containers are critical to running tests in a
+    ...  container environment. Depending upon the initial environment this may
+    ...  require some preliminary work. Here's a link for some instructions:
+    ...  https://www.stgraber.org/2014/01/17/lxc-1-0-unprivileged-containers/
+    ...  At some point in the future this will be enhanced to verify the
+    ...  environment is correct to support unprivileged containers.
     [Arguments]	${_container_name}  ${_distro_name}
     ...		${_distro_version_name}  ${_distro_arch}
     Log To Console	\nCreating container: ${_container_name} in ${CONTAINER_DIR}
@@ -52,10 +59,13 @@ Create Unprivileged Container
     [Return]	${_rc}
 
 Container List
+    [Documentation]  Uses lxc-ls to capture and return a list of existing
+    ...  containers.
     ${_o}=	Run	lxc-ls -f
     [Return]	${_o}
 
 Start Container
+    [Documenation]  Starts an existing container.
     [Arguments]	${_container_name}
     ${_rc}=	Run And Return Rc	lxc-start -d -n ${_container_name}
     # Some time is needed for the container to obtain an IP address.
@@ -83,7 +93,7 @@ Is Container Running
     [Return]	${0}
 
 Container IP Address
-    [Documentation]	This assumes lxc assigns ip addresses in the 10.0.3 range.
+    [Documentation]	Returns the IP address for the given container.
     [Arguments]	${_container_name}
     ${_o}=	Run	lxc-ls -f --running
     Log To Console	\nRunning containers:\n${_o}
@@ -105,9 +115,9 @@ Container IP Address
     [Return]	${_o}
 
 Use Container
-    [Documentation]	This starts an existing container.
-    ...
-    ...		If the container doesn't exist one is created.
+    [Documentation]	This starts an existing container and returns the return code
+    ...  from lxc. A non-zero indicates failure.
+    ...  If the container doesn't exist one is created.
     [Arguments]	${_container_name}  ${_distro_name}
     ...		${_distro_version_name}  ${_distro_arch}
     ${_rc}=	Does Container Exist  ${_container_name}
@@ -120,11 +130,16 @@ Use Container
     [Return]  ${_rc}
 
 Stop Container
+    [Documentation]  Stops the given container and returns the return code
+    ...  from lxc. A non-zero indicates failure.
     [Arguments]	${_container_name}
     ${_rc}	Run And Return Rc	lxc-stop -n ${_container_name}
     [Return]	${_rc}
 
 Destroy Container
+    [Documentation]  Destroys the given container and returns the return code
+    ...  from lxc. A non-zero indicates failure.
+    ...  NOTE: The container must NOT be running at the time.
     [Arguments]	${_container_name}
     ${_rc}=	Run And Return Rc	lxc-destroy -n ${_container_name}
     [Return]	${_rc}
