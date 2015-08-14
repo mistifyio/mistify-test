@@ -1,3 +1,4 @@
+#!/bin/bash
 #+
 # Generate the html documentation for the test library.
 #-
@@ -17,10 +18,25 @@ EOF
 
 }
 
+genresourcedoc () {
+    mkdir -p $outdir/$1
+    for f in $( ls $testlib/$1/*.robot ); do
+	message Generating html doc for: $f
+	python -m robot.libdoc -f html -F robot $f $outdir/$1/$(basename $f).html
+    done
+}
+
 if [ -n "$1" ]; then
     usage
     exit 1
 fi
 message  Generating test library html documentation.
 
+rm -rf $outdir
+
 mkdir -p $outdir && python -m robot.testdoc $testlibdir $outdir/$testlib.html
+
+for d in resources distros repos testbeds; do
+    message Generating html doc for directory: $d
+    genresourcedoc $d
+done
