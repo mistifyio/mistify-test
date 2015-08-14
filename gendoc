@@ -1,0 +1,26 @@
+#+
+# Generate the html documentation for the test library.
+#-
+source scripts/mistify-test-functions.sh
+
+testlib=testlib
+testlibdir=`pwd`/$testlib
+outdir=`pwd`/doc
+
+usage () {
+    message There are no parameters for this script.
+    cat << EOF
+Usage: $0
+    Use this script to generate html documentation. The generated documentation
+    is placed in the directory named "$outdir".
+EOF
+
+}
+
+if [ -n "$1" ]; then
+    usage
+    exit 1
+fi
+message  Generating test library html documentation.
+
+mkdir -p $outdir && python -m robot.testdoc $testlibdir $outdir/$testlib.html
