@@ -25,4 +25,12 @@ This repository contains scripts and tools for testing Mistify and the underlyin
    
 *   **setupbuildcontainer**:<br>
    This suite initializes a container for running the **buildtests**.
-   
+
+## Test Suite Documentation
+
+Most of the documentation for the test suites and supporting keywords is included in the
+source using **[Documentation]** sections. At the beginning of a test run (basicsystemtests)
+the [documentation](http://54.175.251.254:8080/job/Mistify/job/Artifact-Testing/job/basicsystemtests/ws/doc/) 
+is generated for that run. 
+
+
