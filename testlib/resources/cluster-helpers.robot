@@ -220,6 +220,8 @@ Disable Routing To External Network For Nodes
     ${_o}=  SSH Run And Get Output  ${_c}
 
 Get Cluster Container IP Address
+    [Documentation]  Returns the IP address of the named container to be used
+    ...  as the testbed.
     Log To Console	\n
     ${_o}=	Container IP Address	${containername}
     Log To Console	\nContainer IP address: ${_o}
@@ -228,6 +230,11 @@ Get Cluster Container IP Address
     Log To Console	\nContainer IP address is: ${ip}
 
 Login To Cluster Container
+    [Documentation]  Logs in to the cluster container as the user running the
+    ...  test.
+    ...
+    ...  NOTE: This requires the container was created by the same user.
+
     Log To Console  \nLogging in as ${USER} to container at IP: ${ip}
     Login to SUT  ${ip}  ${USER}  ${USER}
     ${_o}=  SSH Run And Get Output  pwd
@@ -237,6 +244,8 @@ Login To Cluster Container
     Log To Console  Home directory is: ${homedir}
 
 Use Cluster Container
+    [Documentation]  This verifies a container of the correct name is running and
+    ...  logs into the container if so.
     ${containername}=	Container Name
     Set Suite Variable  ${containername}
     Set Suite Variable  ${rootprompt}  root\@${containername}
@@ -245,22 +254,28 @@ Use Cluster Container
     Log To Console  rootprompt = ${rootprompt}
     Log To Console  userprompt = ${userprompt}
     ${_rc}=	Is Container Running	${containername}
+    # Kill the run if this fails.
     Should Be Equal As Integers	${_rc}	1
     Get Cluster Container IP Address
     Login To Cluster Container
 
 Release Cluster Container
+    [Documentation]  Releases a container by first releasing the active node and
+    ...  then logging out from the container. The container is left running with
+    ...  the node virtual machines in their current states. This saves time for
+    ...  subsequent test suites.
     Release Node
     Disconnect From SUT
     # Leave the container running for other tests which may need the VMs in
     # their current state.
 
 Use Node
-    [Documentation]  This prepares a node for a test run.
+    [Documentation]  This prepares a node for a test run. A named screen session
+    ...  for the node is assumed to exist and is used.
     ...
     ...  The variable ${node} is set to the node being used.
     ...
-    ...	This optionally resets the node if ${_ts_setup} equals "reset".
+    ...  This optionally resets the node if ${_ts_setup} equals "reset".
     [Arguments]  ${_node}  ${_ts_setup}=none
     Set Suite Variable  ${node}  ${_node}
     Log To Console  Using node: ${node}
