@@ -16,12 +16,15 @@ Suite Setup	Use Cluster Container
 Suite Teardown	Release Cluster Container
 
 *** Test Cases ***
+Select Test Node
+    [Documentation]  Select which node to run the tests against.
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
+
 Check For SPL
     [Documentation]	ZFS requires the SPL kernel module.
     ...
     ...			Verify the spl kernel module is loaded and has
     ...			properly associated with the zfs modules.
-    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
     ${_o}=  SSH Run And Get Output  lsmod \| grep spl
     # It may be this can be expressed as a list of patterns but
     # it's not obvious how to do that at the moment so brute force.

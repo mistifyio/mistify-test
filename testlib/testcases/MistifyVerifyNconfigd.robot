@@ -31,6 +31,9 @@ Suite Teardown	Release Cluster Container
 *** Test Cases ***
 Get Node Information
     Collect Attributes
+
+Select Test Node
+    [Documentation]  Select which node to run the tests against.
     Use Node  @{MISTIFY_CLUSTER_NODES}[0]
 
 Is Nconfigd Active

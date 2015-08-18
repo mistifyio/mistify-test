@@ -34,11 +34,11 @@ ${test_data_path}	testmistify/TEST_DATA
 ${tmp_json_file}	tmp/tmp.json
 
 *** Test Cases ***
-Test is running
-    Log Message  OK
+Select Test Node
+    [Documentation]  Select which node to run the tests against.
+    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
 
 Verify Etcd Is Running
-    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
     ${_o}=  SSH Run And Get Output  ps aux \| grep etcd
     Should Contain  ${_o}  /usr/sbin/etcd
     Should Contain  ${_o}  ${etc_data_dir}

@@ -29,8 +29,11 @@ Suite Teardown	Release Cluster Container
 *** Variables ***
 
 *** Test Cases ***
-Verify Test Network Reachable
+Select Test Node
+    [Documentation]  Select which node to run the tests against.
     Use Node  @{MISTIFY_CLUSTER_NODES}[0]
+
+Verify Test Network Reachable
     ${_o}=  ${MISTIFY_CLUSTER_GATEWAY_IP} Is Responding To Ping
     Should Not Contain  ${_o}  Network is unreachable
 
