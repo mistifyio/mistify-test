@@ -1,0 +1,6 @@
+#!/bin/bash
+#+
+# This script avoids the prompts for adding a host to the known hosts
+# file.
+#-
+ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $*
