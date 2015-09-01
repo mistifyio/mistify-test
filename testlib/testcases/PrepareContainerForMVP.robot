@@ -116,6 +116,10 @@ Configure Network For VMs
     	\	Should Contain  ${_o}  ${_i}
 
 Setup NAT For HTTP
+    [Documentation]  Downloading guest images can be time consuming if from
+    ...  the internet. To save time a HTTP server is run inside the container
+    ...  and the port 80 accesses from the VMs are rerouted from the VMs to
+    ...  the server running inside the container.
     # This is to avoid having to repond to a prompt regarding these files.
     SSH Run  echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
     SSH Run  echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
@@ -129,6 +133,14 @@ Setup NAT For HTTP
     ${_c}=  catenate  SEPARATOR=${SPACE}
     ...	sudo iptables -t nat -I PREROUTING --src 0/0 --dst ${MISTIFY_BRIDGE_IP}
     ...	-p tcp --dport 80 -j REDIRECT --to-ports 8080
+    SSH Run  ${_c}
+
+Setup NAT For Guests
+    [Documentation]  Guest images need to access the outside internet.
+    ${_c}=  catenate  SEPARATOR=${SPACE}
+    ...	sudo iptables -t nat -A POSTROUTING
+    ...	-s ${MISTIFY_BRIDGE_SUBNET}0/24 !
+    ...	-d ${MISTIFY_BRIDGE_SUBNET}0/24 -j MASQUERADE
     SSH Run  ${_c}
 
 Start Guest Image Server
