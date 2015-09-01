@@ -19,13 +19,14 @@ Get Command Line Options
     ...        reset = Reset to initial states for a test run.
     ...                Refer to other tests scripts to determine what actually
     ...                happens when this is used.
-    ...    IMAGEDIR Where images to be tested are located. e.g. This is used
+    ...    IMAGESDIR Where images to be tested are located. e.g. This is used
     ...             to indicate where the Mistify-OS kernel and initrd images
     ...             are located.
     ${ts_setup}=  Get Variable Value  ${SETUP}  none
-    Set Suite Variable  ${ts_setup}
+    Set Global Variable  ${ts_setup}
     Log Message  Option ts_setup = ${ts_setup}
-    ${ts_imagedir}=  Get Variable Value  ${IMAGEDIR}  none
+    ${ts_imagedir}=  Get Variable Value  ${IMAGESDIR}  ${BUILDDIR}/images
+    Set Global Variable  ${ts_imagedir}
     Log Message  Option ts_imagedir = ${ts_imagedir}
 
 Log Output
@@ -46,10 +47,13 @@ SSH Run
     [Documentation]	This runs a command using an active ssh session and
     ...			ignores the output.
     ...
-    ...	The output is accumulated at .5 second intervals until no more output
-    ...	or a timeout occurs.
-    [Arguments]	${_command}
+    ...  The output is accumulated at .5 second intervals until no more output
+    ...  or a timeout occurs. This can be overriden.  If the ${_option} parameter
+    ...  is equal to "return" then this keyword immediately returns and doesn't
+    ...  consume any of the output.
+    [Arguments]	${_command}  ${_option}=none
     ssh.Write  ${_command}
+    Return From Keyword If  '${_option}' == 'return'  none
     # Consume all the output.
     ${_o}=  ssh.Read	delay=0.5s
     Log Output  ${_o}
@@ -109,12 +113,26 @@ SSH Run And Get Return Code
     ${_r}=  Convert To Integer  ${_r}
     [Return]  ${_r}
 
+SSH Wait For Output
+    [Documentation]  Reads the ouput until the pattern is detected or a
+    ...  timeout occurs.
+    [Arguments]  ${_expected}
+    ${_o}=  ssh.Read Until  ${_expected}
+    [Return]  ${_o}
+
 Consume Console Output
     [Documentation]     This consumes and ignores all the console output so
     ...			the next step can have a console which is in sync.
     ${_o}=  ssh.Read  delay=0.5s
     Log Output  ${_o}
     [Return]  ${_o}
+
+${_file} Should Exist
+    [Documentation]  Uses ls to verify a file exists.
+    Log Message  \nVerifying ${_file} exists.
+    ${_r}=  SSH Run And Get Return Code  ls ${_file}
+    Log Message  The return code is: ${_r}
+    Should Be Equal As Integers  ${_r}  ${0}
 
 ${_file} Should Contain ${_pattern}
     [Documentation]  Uses grep to scan a file for a given pattern and returns

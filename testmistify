@@ -28,9 +28,17 @@ Usage: $0 [options] [-- test suite options]
         The path to the directory where Mistify-OS was built (see buildmistify).
         This option is passed to the test suites on the command line in the
         variable BUILDDIR and defaults to the most recent build.
+        NOTE: Using this option resets the imagesdir option.
         This option is saved in the file:
         $testmistifystatedir/builddir
         [builddir=$builddir]
+    --imagesdir <dir>
+        The path to the directory where the Mistify-OS kernel and file system
+        images are located. This is useful when using images which were built
+        elsewhere.
+        This option is saved in the file:
+        $testmistifystatedir/imagesdir
+        [imagesdir=$imagesdir]
     --downloaddir <dir>
         The destination for files downloaded by the Mistiy-OS build. Test related
         files may be downloaded to this directory as well.
@@ -111,6 +119,15 @@ Usage: $0 [options] [-- test suite options]
         Execute only a single test case. This points to the test case file.
         The "testsuite" option is ignored when this option is used.
         This option is NOT saved.
+    --setup <action>
+        This option is passed to the test script to trigger special actions
+        before running the tests. The specifics of the actions are defined by
+        the test scripts. These are passed in the variable named SETUP.
+        A standard setup action is named "reset". This can be used to reset
+        the environment for a new test run.
+        This option is saved in the file:
+        $testmistifystatedir/setup.
+        [setup=$setup]
     --exitonfailure
         This option is used to stop test execution on the first failure. Test
         teardown is still executed.
@@ -166,6 +183,10 @@ Usage: $0 [options] [-- test suite options]
     BUILDDIR = The directory in which Mistify-OS was built. Test cases can use
         this to test against different builds of the Mistify-OS.
     [$builddir]
+    IMAGESDIR = The directory where the Mistify-OS images are stored.
+    [$imagesdir]
+    SETUP = Test setup actions.
+    [$setup]
     DOWNLOADDIR = The directory in which the Mistify-OS build downloads package
     source files. Test related downloads can reside here as well.
     [$downloaddir]
@@ -201,6 +222,7 @@ EOF
 a=`getopt -l "\
 mistifyosdir:,\
 builddir:,\
+imagesdir:,\
 downloaddir:,\
 mistifyosversion:,\
 buildrootversion:,\
@@ -215,6 +237,7 @@ containerid:,\
 testsuitedir:,\
 testsuite:,\
 testcase:,\
+setup:,\
 exitonfailure,\
 testtag:,\
 testlogdir:,\
@@ -245,6 +268,11 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--builddir)
 	    builddir=$2
+	    imagesdir=$builddir/images
+	    shift
+	    ;;
+	--imagesdir)
+	    imagesdir=$2
 	    shift
 	    ;;
 	--downloaddir)
@@ -303,6 +331,10 @@ while [ $# -ge 1 ]; do
 	    testcase=$2
 	    shift
 	    ;;
+	--setup)
+	    setup=$2
+	    shift
+	    ;;
 	--exitonfailure)
 	    exitonfailure=y
 	    ;;
@@ -357,6 +389,8 @@ buildmistifystatedir=$mistifyosdir/.buildmistify
 statevars=(
     builddir\;$(get_build_default $buildmistifystatedir \
 		    variantbuilddir $mistifyosdir/build/mistify/base)
+    imagesdir\;$(get_build_default $buildmistifystatedir \
+		    variantbuilddir $mistifyosdir/build/mistify/base)/images
     downloaddir\;$(get_build_default $buildmistifystatedir \
 		    downloaddir $PWD/downloads)
     mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
@@ -374,6 +408,7 @@ statevars=(
     containerid\;-test
     testsuitedir\;testlib/testsuites
     testsuite\;defaulttests
+    setup\;none
     testlogdir\;testlogs
     testlog\;testmistify.log
 )
@@ -434,10 +469,17 @@ log "Command line: $cmdline"
 # need to be employeed to specify the class of test cases to run.
 # This raises other questions such as where to put test logs if no build.
 #-
+
 if [ -d "$builddir" ]; then
     message "Testing the build in $builddir"
 else
     warning "The build directory $builddir does not exist."
+fi
+
+if [ -d "$imagesdir" ]; then
+    message "Testing images in $imagesdir"
+else
+    warning "The images directory $imagesdir does not exist."
 fi
 
 if [ -d "$downloaddir" ]; then
@@ -525,11 +567,13 @@ log Setting BUILDROOTVERSION to $buildrootversion
 log Setting TOOLCHAINVERSION to $toolchainversion
 log Setting GOVERSION to $goversion
 log Setting BUILDDIR to $builddir
+log Setting IMAGESDIR to $builddir/images
 log Setting DOWNLOADDIR to $downloaddir
 log Setting TESTLIBDIR to $testlibdir
 log Setting TESTDISTRO to $testdistrodir/$testdistro
 log Setting CONTAINER_ID to $containerid
 log Setting TESTBED to $testbeddir/$testbed
+log Setting SETUP to $setup
 log Setting USER to $USER
 log Setting HOME to $HOME
 
@@ -541,11 +585,13 @@ pybotcommand="pybot $verboseoption -d $testlogdir \
     -v TOOLCHAINVERSION:$toolchainversion \
     -v GOVERSION:$goversion \
     -v BUILDDIR:$builddir \
+    -v IMAGESDIR:$builddir/images \
     -v DOWNLOADDIR:$downloaddir \
     -v TESTLIBDIR:$testlibdir \
     -v TESTDISTRO:$testdistrodir/$testdistro \
     -v CONTAINER_ID:$containerid \
     -v TESTBED:$testbeddir/$testbed \
+    -v SETUP:$setup \
     -v USER:$USER \
     -v HOME:$HOME \
     $pybotoptions \
