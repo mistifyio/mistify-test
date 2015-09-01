@@ -111,9 +111,9 @@ Run Command On Node
 Reboot Node
     [Documentation]	Reboot a node. It's assumed already logged in.
     ...	This waits until the node has booted.
-    [Arguments]  ${_n}
-    Log To Console  Rebooting node: ${_n}
-    Attach Screen  ${_n}
+    [Arguments]  ${_node}
+    Log To Console  Rebooting node: ${_node}
+    Attach Screen  ${_node}
     ssh.Write  reboot
     ssh.Set Client Configuration  timeout=4m
     ${_o}=  ssh.Read Until  random: nonblocking
@@ -126,10 +126,10 @@ Shutdown Node
     [Documentation]	Shutdown a node's VM and wait for it to shutdown.
     ...	This waits until the node has booted.
 
-    [Arguments]  ${_n}
+    [Arguments]  ${_node}
 
-    Log To Console  Shutting down VM for node: ${_n}
-    Attach Screen  ${_n}
+    Log To Console  Shutting down VM for node: ${_node}
+    Attach Screen  ${_node}
     Exit VM In Screen
     ssh.Set Client Configuration  timeout=15s
     ssh.Read Until  QEMU: Terminated
@@ -141,12 +141,12 @@ Start Node
     ...			created by ClusterInitialization.robot.
     ...	This waits until the node has booted.
 
-    [Arguments]  ${_n}
-    Log To Console  Starting VM for node: ${_n}
-    Attach Screen  ${_n}
+    [Arguments]  ${_node}
+    Log To Console  Starting VM for node: ${_node}
+    Attach Screen  ${_node}
 
-    ssh.Write  ~/tmp/start-${_n}
-    Log To Console  \nWaiting for node ${_n} to boot.
+    ssh.Write  ~/tmp/start-${_node}
+    Log To Console  \nWaiting for node ${_node} to boot.
     # This is emitted some time after a boot (typically 30 to 40 seconds)
     # Wait until this occurs to avoid having it mess up normal output.
     ssh.Set Client Configuration  timeout=4m
@@ -164,27 +164,33 @@ Restart Node
     ...			by ClusterInitialization.robot.
     ...	This waits until the node has booted.
 
-    [Arguments]  ${_n}
+    [Arguments]  ${_node}
 
-    Log To Console  Restarting VM for node: ${_n}
-    Shutdown Node  ${_n}
-    ${_o}=  Start Node  ${_n}
+    Log To Console  Restarting VM for node: ${_node}
+    Shutdown Node  ${_node}
+    ${_o}=  Start Node  ${_node}
     [Return]  ${_o}
 
 Reset Node
-    [Documentation]	Reset a node by shutting down the node's VM and
-    ...			restart the VM using the node's initial disk image and
-    ...			startup script created by ClusterInitialization.robot.
-    ...	This waits until the node has booted.
+    [Documentation]  Reset a node by shutting down the node's VM and
+    ...  restart the VM using the node's either a new disk image
+    ...  initial disk image or a new disk image and the startup script created
+    ...  by ClusterInitialization.robot.
+    ...  The argument "_diskimage" controls which disk image is used.
+    ...    same (default)  Uses the same disk image.
+    ...    clean           Uses a new disk image.
+    ...    initial         Uses the disk image from when the node was first
+    ...                    started.
+    ...  This waits until the node has booted.
 
-    [Arguments]  ${_n}
+    [Arguments]  ${_node}  ${_diskimage}=same
 
-    Log To Console  Resetting VM for node: ${_n}
-    Shutdown Node  ${_n}
-    Attach Screen  ${_n}
-    ssh.Write  cp ~/images/${_n}.img.initial ~/images/${_n}.img
-    Detach Screen
-    ${_o}=  Start Node  ${_n}
+    Log Message  Resetting VM for node: ${_node}
+    Shutdown Node  ${_node}
+    Log Message  Using ${_diskimage} disk image.
+    Run Keyword If  '${_diskimage}'=='clean'  ssh.Write  rm ~/images/${_node}.img
+    Run Keyword If  '${_diskimage}'=='initial'  ssh.Write  cp ~/images/${_node}.img.initial ~/images/${_node}.img
+    ${_o}=  Start Node  ${_node}
     [Return]  ${_o}
 
 Reset All Nodes
@@ -275,13 +281,13 @@ Use Node
     ...
     ...  The variable ${node} is set to the node being used.
     ...
-    ...  This optionally resets the node if ${_ts_setup} equals "reset".
-    [Arguments]  ${_node}  ${_ts_setup}=none
+    ...  This optionally resets the node if "_setup" equals "reset".
+    [Arguments]  ${_node}  ${_setup}=none
     Set Suite Variable  ${node}  ${_node}
     Log To Console  Using node: ${node}
-    Run Keyword If  '${_ts_setup}'=='reset'  Reset Node  ${node}
+    Run Keyword If  '${_setup}'=='reset'  Reset Node  ${node}  initial
     Attach Screen  ${node}
-    Run Keyword If  '${_ts_setup}'=='reset'  Login To Mistify
+    Run Keyword If  '${_setup}'=='reset'  Login To Mistify
     SSH Run  \n\n
 
 Release Node
