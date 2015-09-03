@@ -66,9 +66,10 @@ ${MISTIFY_DEFAULT_MAC}	de:ad:be:ef:02:0	# Last digit is appended when
 						# the VM is started.
 ${MISTIFY_VM_ETH_INTERFACE}	enp0s3
 
+### Testing a Cluster Running in VMs ###
 # Cluster nodes  -- NOTE: These need to end with an hex digit because they are
 # also used to construct MAC addresses.
-@{MISTIFY_CLUSTER_NODES}	node0  node1  node2
+@{MISTIFY_CLUSTER_NODES}	node0  node1
 ${MISTIFY_CLUSTER_NODE_BRIDGE}	br0
 ${MISTIFY_CLUSTER_SUBNET}	192.168.200
 ${MISTIFY_CLUSTER_GATEWAY_IP}	${MISTIFY_CLUSTER_SUBNET}.1
@@ -83,4 +84,21 @@ ${ETCD_ELECTION_TIMEOUT}	10000
 # Helpers
 ${MISTIFY_NODES_CONFIG_FILE}	nodes-config
 ${MISTIFY_JSON_PARSER}		parsejson
+
+### Using Mistify-OS to Build Mistify-OS ###
+${MISTIFY_SEEDTOOLCHAIN}	crosstool-ng-1.21.0.tgz
+${MISTIFY_SEEDTOOLCHAIN_URL}	http://builds.mistify.io/guest-images
+@{MISTIFY_SDK_NODES}		sdk0
+${MISTIFY_SDK_SUBNET}		10.0.2
+${MISTIFY_SDK_GATEWAY_IP}	${MISTIFY_SDK_SUBNET}.1
+${MISTIFY_SDK_PRIMARY_IP}	${MISTIFY_SDK_SUBNET}.100
+${MISTIFY_SDK_NET_MASK_BITS}	24
+# To build Mistify-OS a really large disk is needed. This is enough to build
+# one variation.
+${MISTIFY_SDK_IMAGE_SIZE}	25G
+
+# In Mistify-OS the typical user IDs in the range 1000 are already taken.
+# This makes it impossible to match IDs. So use an arbitrary ID.
+${MISTIFY_SDK_USER_ID}		2000
+
 

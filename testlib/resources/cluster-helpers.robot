@@ -15,6 +15,33 @@ Library	Collections
 *** Variables ***
 
 *** Keywords ***
+Collect SDK Attributes
+    [Documentation]	This collects the attributes of each of the running
+    ...			nodes and makes them available in a global collection.
+    ...
+    ...  NOTE: This requires different screen sessions for each of the nodes and
+    ...  each session is named after the node.
+    ...
+    ...  This creates a collection of collections. The top collection is used
+    ...  to access the individual node attributes and is keyed by node name.
+    ${Nodes}=	Create Dictionary  node  dictionary
+    :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
+      \  Attach Screen  ${_n}
+      \  Log To Console  \nCollecting attributes for node: ${_n}
+      \  ${_if}=  Learn Test Interface
+      \  Log To Console  \nNode ${_n} interface: ${_if}
+      \  ${_ip}=  Learn IP Address  ${_if}
+      \  Log To Console  \nNode ${_n} IP address: ${_ip}
+      \  ${_mac}=  Learn MAC Address  ${_if}
+      \  Log To Console  \nNode ${_n} MAC address: ${_mac}
+      \  ${_uuid}=  Learn UUID
+      \  Log To Console  \nNode ${_n} UUID: ${_uuid}
+      \  ${_a}=  Create Dictionary  uuid  ${_uuid}  if  ${_if}  ip  ${_ip}  mac  ${_mac}
+      \  Set To Dictionary  ${Nodes}  ${_n}  ${_a}
+      \  Detach Screen
+    Log Dictionary  ${Nodes}
+    Set Global Variable  ${Nodes}
+
 Collect Attributes
     [Documentation]	This collects the attributes of each of the running
     ...			nodes and makes them available in a global collection.
@@ -61,6 +88,7 @@ Get Node UUID
 SSH To Node
     [Documentation]	This logs into a node using ssh.
     ...
+    ...	NOTE: This uses the configured mistify user (typically root).
     ...	NOTE: This uses the running ssh session to run ssh to login to the
     ...	node and therefore does not require switching ssh sessions.
     [Arguments]	${_node}
@@ -81,6 +109,7 @@ Logout From Node
 
 Copy File To Node
     [Documentation]  Copy a file to a node using scp.
+    ...	NOTE: This uses the configured mistify user (typically root).
     [Arguments]  ${_node}  ${_source}  ${_destination}
     ${_ip}=  Get Node IP Address  ${_node}
     ${_c}=  catenate
@@ -96,12 +125,76 @@ Copy File To Node
 Run Command On Node
     [Documentation]	This uses ssh to run a command on the node and then
     ...			return the output.
+    ...	NOTE: This uses the configured mistify user (typically root).
     [Arguments]	${_node}  ${_command}
     ${_ip}=  Get Node IP Address  ${_node}
     ${_c}=  catenate
     ...  sshpass -p ${MISTIFY_PASSWORD}
     ...  ssh ${ssh_options}
     ...  ${MISTIFY_USERNAME}@${_ip} ${_command}
+    Log To Console  \nRunning: ${_c}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Log To Console  Result: ${_o}
+    Should Not Contain  ${_o}  Permission denied
+    [Return]  ${_o}
+
+SSH As User To Node
+    [Documentation]	This logs into a node as a non-mistify user using ssh.
+    ...
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    ...	NOTE: This uses the running ssh session to run ssh to login to the
+    ...	node and therefore does not require switching ssh sessions.
+    [Arguments]	${_user}  ${_node}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_uuid}=  Get Node UUID  ${_node}
+    ${_c}=  catenate
+    ...  ssh ${ssh_options}
+    ...  ${_user}@${_ip}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Should Contain  ${_o}  ${_user}@${_uuid}
+    Should Not Contain  ${_o}  Permission denied
+
+Copy File As User To Node
+    [Documentation]  Copy a file as a non-mistify user to a node using scp.
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    [Arguments]  ${_user}  ${_node}  ${_source}  ${_destination}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_c}=  catenate
+    ...  scp ${ssh_options}
+    ...  ${_source}  ${_user}@${_ip}:${_destination}
+    Log To Console  \nRunning: ${_c}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Should Not Contain  ${_o}  No such file or directory
+    Should Not Contain  ${_o}  Is a directory
+    Should Not Contain  ${_o}  Permission denied
+
+Copy Directory As User To Node
+    [Documentation]  Copy a directory as a non-mistify user to a node using scp.
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    [Arguments]  ${_user}  ${_node}  ${_source}  ${_destination}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_c}=  catenate
+    ...  scp ${ssh_options} -r
+    ...  ${_source}  ${_user}@${_ip}:${_destination}
+    Log To Console  \nRunning: ${_c}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Should Not Contain  ${_o}  No such file or directory
+    Should Not Contain  ${_o}  Is a directory
+    Should Not Contain  ${_o}  Permission denied
+
+Run Command As User On Node
+    [Documentation]	This uses ssh to run a command as a non-mistify user on
+    ...  the node and then return the output.
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    [Arguments]	${_user}  ${_node}  ${_command}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_c}=  catenate
+    ...  ssh ${ssh_options}
+    ...  ${_user}@${_ip} ${_command}
     Log To Console  \nRunning: ${_c}
     ${_o}=  SSH Run And Get Output  ${_c}
     Log To Console  Result: ${_o}
