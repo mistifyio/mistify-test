@@ -1,5 +1,6 @@
 *** Settings ***
-Documentation    This runs a simple test similar to the original demo of the MVP.
+Documentation    This does some of the work for preparing a container for running
+...  cluster related tests.
 ...
 ...	The test is executed using a container which was previously prepared
 ...	using the ProvisionTestContainer.robot script.
