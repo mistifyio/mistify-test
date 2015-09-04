@@ -13,7 +13,7 @@ Library		String
 # NOTE: The variable TESTLIBDIR is passed from the command line by the testmistify
 # script. There is no default value for this variable.
 #-
-Resource	${TESTLIBDIR}/resources/mistify.robot
+Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 
@@ -56,6 +56,7 @@ Collect Node Attributes
     ...  (${Nodes}) any test suites following this one will be able to access
     ...  the already collected atributes for each of the test nodes.
     Collect SDK Attributes
+
 
 Add User To All SDK Instances
     :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
