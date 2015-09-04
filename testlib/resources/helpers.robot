@@ -34,8 +34,9 @@ Log Output
     ...  the pattern "++++" at the start and "----" at the end. The output is
     ...  also sent to the console.
     [Arguments]  ${_output}
-    ${_e}=  Evaluate  chr(int(0x1b))
-    ${_o}=  Replace String  ${_output}  ${_e}  ESC
+    # Escape sequences only clutter the output. Remove them.
+    ${_o}=  Remove String Using Regexp  ${_output}
+    ...  \\x1b\\[([0-9,A-Z]{1,2}(;[0-9]{1,2})?(;[0-9]{3})?)?[m|K]?
     Log  \nConsole output: \n++++\n${_o}\n----  console=true
 
 Log Message
