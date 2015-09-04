@@ -68,6 +68,7 @@ Add User To All SDK Instances
       \  Verify User Home Directory  ${USER}
       \  Set User Password  ${USER}
       \  Enable Nopassword Sudo For User  ${USER}
+      \  Enable Temporary File Write Permissions
       \  Release Node
       \  Verify User Can SSH  ${USER}  ${_n}
       \  Transfer User Keys  ${USER}  ${_n}
@@ -158,6 +159,13 @@ Transfer User Keys
     Run Command As User On Node  ${_user}  ${_node}
     ...  chmod 600 ~/ssh/*
     Log Message  Copied keys to node ${_node}.
+
+Enable Temporary File Write Permissions
+    [Documentation]  By default mistify-os has permissions on /tmp set to
+    ...  writtable only by root. For a lot of tools to work for the user this
+    ...  needs to be writable by the user.
+    Log Message  \nEnabling write permissions on /tmp.
+    SSH Run  chmod 777 /tmp
 
 Setup Testsuite
     ${containername}=	Container Name
