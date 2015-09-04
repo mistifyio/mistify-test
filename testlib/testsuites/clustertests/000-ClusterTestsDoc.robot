@@ -5,7 +5,7 @@ Documentation  This test suite is used to verify cluster creation and running
 ...  This script emmits parameters and variables to the log file to document
 ...  the settings used for this suite of tests.
 
-Resource	${TESTLIBDIR}/resources/mistify.robot
+Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/cluster-helpers.robot
 
 *** Test Cases ***
