@@ -111,8 +111,10 @@ Configure Network For VMs
     ...  NOTE: This relies upon the user being configured for sudo and NOPASSWD.
     ...  NOTE: Up to three Mistify-OS nodes are supported.
     ${_c}=  catenate  SEPARATOR=${SPACE}
-    ...	${TESTLIBDIR}/scripts/vm-network --bridge ${MISTIFY_BRIDGE}
+    ...	${TESTLIBDIR}/scripts/vm-network
+    ...	--bridge ${MISTIFY_BRIDGE}
     ...	--bridgeip ${MISTIFY_BRIDGE_IP}
+    ...	--nameserver ${MISTIFY_SDK_GATEWAY_IP}
     :FOR  ${_i}  IN  @{MISTIFY_SDK_NODES}
     	\	${_o}=  SSH Run And Get Output  ${TESTLIBDIR}/scripts/vm-network --tap ${_i}
     	\	Log To Console  ${_o}
