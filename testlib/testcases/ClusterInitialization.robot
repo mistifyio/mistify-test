@@ -258,39 +258,4 @@ Teardown Testsuite
     Disconnect From SUT
     # Stop Container	${containername}
 
-Restart Node With New MAC Address
-    [Documentation]	This is a workaround because the current version of
-    ...			the Mistify demo where the VM ethernet MAC address
-    ...			needs to be the same as the computed br0 MAC
-    ...			address for inter-node dhcp to work.
-    ...
-    ...  No two devices in a network should have the same MAC address but
-    ...  because of the way the pre-init works versus using bridges the MAC
-    ...  address needed by cluster init has to be the same as the ethernet
-    ...  MAC address. This is a workaround for that problem where the VM for
-    ...  a node is restarted with the bridge's MAC.
-    [Arguments]  ${_n}  ${_uuid}  ${_mac}
-    # Be sure the disk image is updated.
-    Use Node  ${_n}
-    ssh.Set Client Configuration  timeout=5s
-    SSH Run  sync; echo "File System sync'd"
-    Exit VM In Screen
-    ssh.Set Client Configuration  timeout=15s
-    ssh.Read Until  QEMU: Terminated
-    ${_c}=  catenate  SEPARATOR=${SPACE}
-    ...  ${TESTLIBDIR}/scripts/start-vm
-    ...  --diskimage ~/images/${_n}.img --tap ${_n}
-    ...  --uuid ${_uuid}
-    ...  --mac ${_mac}
-    Log To Console  Generating node start script for node: ${_n}
-    ssh.Write  mkdir -p ~/tmp; echo ${_c} >~/tmp/start-${_n}
-    ssh.Write  chmod +x ~/tmp/start-${_n}
-    Log To Console  Saving initial disk image for node: ${_n}
-    ssh.Write  cp ~/images/${_n}.img ~/images/${_n}.img.initial
-    Log To Console  Restarting VM: ${_c}
-    ssh.Write  ${_c}
-    ssh.Set Client Configuration  timeout=4m
-    ssh.Read Until  random: nonblocking
-    ssh.Set Client Configuration  timeout=3s
-    Release Node
 
