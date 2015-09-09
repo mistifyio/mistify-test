@@ -264,6 +264,37 @@ Restart Node
     ${_o}=  Start Node  ${_node}
     [Return]  ${_o}
 
+Restart Node With New MAC Address
+    [Documentation]  This restarts a node and saves the disk image as the
+    ...  initial disk image and is intended to be used once after a node
+    ...  has been brought to a desired state. This helps return a node to
+    ...  the known state at a later time.
+    [Arguments]  ${_node}  ${_uuid}  ${_mac}
+    # Be sure the disk image is updated.
+    Use Node  ${_node}
+    ssh.Set Client Configuration  timeout=5s
+    SSH Run  sync; echo "File System sync'd"
+    Exit VM In Screen
+    ssh.Set Client Configuration  timeout=15s
+    ssh.Read Until  QEMU: Terminated
+    # Generate a quick start script for the node.
+    ${_c}=  catenate  SEPARATOR=${SPACE}
+    ...  ${TESTLIBDIR}/scripts/start-vm
+    ...  --diskimage ~/images/${_node}.img --tap ${_node}
+    ...  --uuid ${_uuid}
+    ...  --mac ${_mac}
+    Log To Console  Generating node start script for node: ${_node}
+    ssh.Write  mkdir -p ~/tmp; echo ${_c} >~/tmp/start-${_node}
+    ssh.Write  chmod +x ~/tmp/start-${_node}
+    Log To Console  Saving initial disk image for node: ${_node}
+    ssh.Write  cp ~/images/${_node}.img ~/images/${_n}.img.initial
+    Log To Console  Restarting VM: ${_c}
+    ssh.Write  ${_c}
+    ssh.Set Client Configuration  timeout=4m
+    ssh.Read Until  random: nonblocking
+    ssh.Set Client Configuration  timeout=3s
+    Release Node
+
 Reset Node
     [Documentation]  Reset a node by shutting down the node's VM and
     ...  restart the VM using the node's either a new disk image
