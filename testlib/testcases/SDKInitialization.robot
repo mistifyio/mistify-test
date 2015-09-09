@@ -147,7 +147,6 @@ Install SDK Node Net Config
     \  SSH Run  cp /etc/resolv.conf resolv.conf.original
     \  Release Node
 
-
 *** Keywords ***
 Setup Testsuite
     ${containername}=	Container Name

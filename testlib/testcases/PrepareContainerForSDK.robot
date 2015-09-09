@@ -8,6 +8,7 @@ Documentation    This prepares a container to run Mistify-OS in a single
 ...	NOTE: This requires a build of Mistify-OS exists from which to obtain
 ...	the kernel and initrd images used for the test.
 ...
+...
 ...	The container is left running after being setup to run Mistify-OS
 ...	nodes. This is because the network configuration will no longer exist
 ...	after the container has been shutdown making it necessary to run this
@@ -59,10 +60,10 @@ Install Seed Toolchain
     ...			unnecessary to download the file there (next test).
     SSH Run  mkdir -p ${httpserverdir}/${toolchaindir}
     ${_s}  ${_o}=  Run Keyword And Ignore Error
-    ...	ssh.Put File  ${DOWNLOADDIR}/${MISTIFY_SEEDTOOLCHAIN}
-    ...	${httpserverdir}/${toolchaindir}/
+    ...  ssh.Put File  ${DOWNLOADDIR}/${MISTIFY_SEEDTOOLCHAIN_FILE}
+    ...    ${httpserverdir}/${toolchaindir}/
     Run Keyword If  '${_s}' == 'PASS'
-    ...	Log Message  Image file ${MISTIFY_SEEDTOOLCHAIN} copied to container.
+    ...  Log Message  Image file ${MISTIFY_SEEDTOOLCHAIN_FILE} copied to container.
 
 Download Toolchain
     [Documentation]	Download a prebuilt toolchain which was built using
@@ -74,11 +75,11 @@ Download Toolchain
     SSH Run  cd ${httpserverdir}/${toolchaindir}
     ${_o}=  SSH Run And Get Output  pwd
     Log To Console  \nDownloading toolchain from:
-    ...  ${MISTIFY_SEEDTOOLCHAIN_URL}/${MISTIFY_SEEDTOOLCHAIN}
-    Log To Console  \nDownloading toolchian to: ${_o}
+    ...  ${MISTIFY_SEEDTOOLCHAIN_URL}/${MISTIFY_SEEDTOOLCHAIN_FILE}
+    Log To Console  \nDownloading toolchain to: ${_o}
     ${_c}=  catenate  SEPARATOR=${SPACE}
-    ...  if [ ! -f ${MISTIFY_SEEDTOOLCHAIN} ]; then
-    ...    wget ${MISTIFY_SEEDTOOLCHAIN_URL}/${MISTIFY_SEEDTOOLCHAIN};
+    ...  if [ ! -f ${MISTIFY_SEEDTOOLCHAIN_FILE} ]; then
+    ...    wget ${MISTIFY_SEEDTOOLCHAIN_URL}/${MISTIFY_SEEDTOOLCHAIN_FILE};
     ...  else
     ...    echo "The toolchain file exists.";
     ...  fi
@@ -89,7 +90,7 @@ Download Toolchain
     Log To Console  ${_o}
     SSH Run  cd ${homedir}
     ${_o}=  SSH Run And Get Output  ls ${httpserverdir}/${toolchaindir}
-    Should Contain  ${_o}  ${MISTIFY_SEEDTOOLCHAIN}
+    Should Contain  ${_o}  ${MISTIFY_SEEDTOOLCHAIN_FILE}
 
 Copy Mistify Images To Container
     Update Mistify Images
