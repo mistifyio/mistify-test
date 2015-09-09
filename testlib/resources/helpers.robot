@@ -52,11 +52,11 @@ SSH Run
     ...  or a timeout occurs. This can be overriden.  If the ${_option} parameter
     ...  is equal to "return" then this keyword immediately returns and doesn't
     ...  consume any of the output.
-    [Arguments]	${_command}  ${_option}=none
+    [Arguments]	${_command}  ${_option}=none  ${_delay}=0.5s
     ssh.Write  ${_command}
     Return From Keyword If  '${_option}' == 'return'  none
     # Consume all the output.
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
 
 SSH Run And Get Output
@@ -65,9 +65,9 @@ SSH Run And Get Output
     ...
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
-    [Arguments]	${_command}
+    [Arguments]	${_command}  ${_delay}=0.5s
     ssh.Write  ${_command}
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
     [Return]  ${_o}
 
@@ -77,9 +77,9 @@ SSH Run And Get First Line
     ...
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
-    [Arguments]	${_command}
+    [Arguments]	${_command}  ${_delay}=0.5s
     ssh.Write  ${_command}
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
     ${_l}=  Get Line  ${_o}  1
     [Return]  ${_l}
@@ -101,11 +101,11 @@ SSH Run And Get Return Code
     ...
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
-    [Arguments]	${_command}
+    [Arguments]	${_command}  ${_delay}=0.5s
     ssh.Write  ${_command}
-    ssh.Read	delay=0.5s
+    ssh.Read	delay=${_delay}
     ssh.Write  echo RC=$?
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
     ${_l}=  Get Lines Containing String  ${_o}  RC=
     # Ensure only the return code is used.
@@ -124,7 +124,8 @@ SSH Wait For Output
 Consume Console Output
     [Documentation]     This consumes and ignores all the console output so
     ...			the next step can have a console which is in sync.
-    ${_o}=  ssh.Read  delay=0.5s
+    [Arguments]  ${_delay}=0.5s
+    ${_o}=  ssh.Read  delay=${_delay}
     Log Output  ${_o}
     [Return]  ${_o}
 
@@ -142,6 +143,7 @@ ${_file} Should Contain ${_pattern}
     Log Message  \nSearching ${_file} for "${_pattern}"
     ${_l}=  SSH Run And Get Key Line  GREP:
     ...  grep '${_pattern}' ${_file}
+    Should Contain  ${_l}  ${_pattern}
 
 Files Should Be Same
     [Documentation]  Uses diff to compare two files and verify they are the
