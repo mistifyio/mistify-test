@@ -53,6 +53,7 @@ SSH Run
     ...  is equal to "return" then this keyword immediately returns and doesn't
     ...  consume any of the output.
     [Arguments]	${_command}  ${_option}=none  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
     Return From Keyword If  '${_option}' == 'return'  none
     # Consume all the output.
@@ -66,6 +67,7 @@ SSH Run And Get Output
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
     [Arguments]	${_command}  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
     ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
@@ -78,6 +80,7 @@ SSH Run And Get First Line
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
     [Arguments]	${_command}  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
     ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
@@ -102,6 +105,7 @@ SSH Run And Get Return Code
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
     [Arguments]	${_command}  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
     ssh.Read	delay=${_delay}
     ssh.Write  echo RC=$?
