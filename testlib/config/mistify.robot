@@ -93,6 +93,8 @@ ${MISTIFY_SDK_CONTAINER_IP}	${MISTIFY_SDK_SUBNET}.2
 ${MISTIFY_SDK_GATEWAY_IP}	${MISTIFY_SDK_GATEWAY_SUBNET}.1
 ${MISTIFY_SDK_PRIMARY_IP}	${MISTIFY_SDK_SUBNET}.100
 ${MISTIFY_SDK_NET_MASK_BITS}	24
+${MISTIFY_SDK_HOST_IP}		${MISTIFY_SDK_GATEWAY_SUBNET}.1
+
 # To build Mistify-OS a really large disk is needed. This is enough to build
 # one variation.
 ${MISTIFY_SDK_IMAGE_SIZE}	25G
@@ -100,6 +102,8 @@ ${MISTIFY_SDK_IMAGE_SIZE}	25G
 # In Mistify-OS the typical user IDs in the range 1000 are already taken.
 # This makes it impossible to match IDs. So use an arbitrary ID.
 ${MISTIFY_SDK_USER_ID}		2000
+${MISTIFY_SDK_ROOT}		/mistify/sdk
+${MISTIFY_SDK_SYSROOT}		${MISTIFY_SDK_ROOT}/sysroot
 
 ${MISTIFY_SEEDTOOLCHAIN}	crosstool-ng
 ${MISTIFY_SEEDTOOLCHAIN_VERSION}  1.21.0
