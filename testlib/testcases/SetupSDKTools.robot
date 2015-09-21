@@ -44,6 +44,11 @@ Login To Container
     Set Suite Variable  ${homedir}
     Log To Console  Home directory is: ${homedir}
 
+Install Latest Mistify Build
+    [Documentation]  Later, each node will be reset. Install the latest build
+    ...  so the nodes will boot using the latest kernel and initrd.
+    Update Mistify Images
+
 Collect Node Attributes
     [Documentation]  Collect the node attributes for use by the other tests.
     ...
@@ -56,28 +61,21 @@ Collect Node Attributes
 
 Setup Tools In All SDK Instances
     [Documentation]  This installs the tools needed to run buildmistify.
+    ...  NOTE: Since the rootfs is actually a RAM disk many of these changes
+    ...  are not persistent across boots.
     :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
       \  Log Message  Resetting node to initial state: ${_n}
       \  Use Node  ${_n}  reset
       \  Release Node
       \  Log Message  \nSSH to node: ${_n}
       \  SSH As User To Node  ${USER}  ${_n}
-      \  Create Needed Directories
+      \  Create Needed Directories  ${USER}
       \  Authenticate With Github
       \  Clone The Mistify Test Repo
       \  Clone The Mistify OS Repo
-      \  Install The Seed Toolchain
-      \  Install GNU Package  m4  1.4.17
-      \  Install GNU Package  autoconf  2.69
-      \  Install GNU Package  automake  1.15
-      \  Install GNU Package  libtool  2.4.6
-      \  Install GNU Package  bison  3.0.4
-      \  Install GNU Package  flex  2.5.39  _url=http://download.sourceforge.net/project
-      \  Install GNU Package  texinfo  4.13a
-      \  Install GNU Package  ncurses  5.9  _install=install.includes
+      \  Install GNU Package  texinfo  4.13  _flags=LDFLAGS=" -L/usr/lib -lncurses"
       \  Install Python PIP
       \  Install Robot Framework
-      \  Build The GO Compiler
       \  SSH Run  exit
 
 *** Keywords ***
@@ -85,18 +83,37 @@ Create Needed Directories
     [Documentation]  This creates some directories which are needed later.
     ...  These are the directories for the mistify relelated clones, where
     ...  downloaded files are maintained and, where toolchains will reside.
-    SSH Run  mkdir ~/downloads
-    SSH Run  mkdir ~/projects
-    SSH Run  mkdir ~/tmp
+    [Arguments]  ${_user}
+    # This makes these directories persistent and relative to the user.
+    SSH Run  sudo mkdir -p ${MISTIFY_SDK_ROOT}
+    SSH Run  sudo chown ${_user}.${_user} ${MISTIFY_SDK_ROOT}
+    SSH Run  mkdir -p ${MISTIFY_SDK_SYSROOT}/usr/include
+    # SSH Run  sudo ln -s ${MISTIFY_SDK_SYSROOT}/usr/include /usr/include
+    SSH Run  mkdir -p ${MISTIFY_SDK_SYSROOT}/usr/local
+    SSH Run  sudo ln -s ${MISTIFY_SDK_SYSROOT}/usr/local /usr/local
+    SSH Run  mkdir ${MISTIFY_SDK_ROOT}/downloads
+    SSH Run  mkdir ${MISTIFY_SDK_ROOT}/projects
+    SSH Run  mkdir ${MISTIFY_SDK_ROOT}/tmp
+
+Install Development Headers
+    [Documentation]  This copies the development headers from the seed build of
+    ...  mistify-os.
+    ${_c}=  catenate
+    ...  ${MISTIFY_SDK_ROOT}/projects/mistify-test/testlib/scripts/scp-nostrict -r
+    ...  ${MISTIFY_SDK_HOST_IP}:${BUILDDIR}/staging/usr/include/*
+    ...  ${MISTIFY_SDK_SYSROOT}/usr/include/
+    ${_o}=  SSH Run And Get Output  ${_c}  _delay=10s
+    Should Contain  ${_o}  zlib.h
 
 Install Python PIP
     [Documentation]  PIP is used to install Python packages.
     ssh.Set Client Configuration  timeout=3m
-    SSH Run  cd ~/downloads
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/downloads
     ${_o}=  SSH Run And Get Output  wget https://bootstrap.pypa.io/get-pip.py
+    ...  _delay=10s
     Should Contain  ${_o}  saved
-    SSH Run  cd ~/tmp
-    ${_o}=  SSH Run And Get Output  sudo python ../downloads/get-pip.py
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
+    ${_o}=  SSH Run And Get Output  sudo python ${MISTIFY_SDK_ROOT}/downloads/get-pip.py
     ...  _delay=5s
     Should Contain  ${_o}  Successfully installed pip
     ssh.Set Client Configuration  timeout=3s
@@ -114,7 +131,7 @@ Authenticate With Github
     [Documentation]  Using the keys previously installed in .ssh authenticate
     ...  with github.com so can clone and update projects.
     ssh.Set Client Configuration  timeout=30s
-    ${_o}=  SSH Run And Get Output  ssh -T git@github.com  _delay=5s
+    ${_o}=  SSH Run And Get Output  ssh -T git@github.com  _delay=10s
     Should Contain  ${_o}  successfully authenticated
     ssh.Set Client Configuration  timeout=3s
 
@@ -122,9 +139,9 @@ Clone The Mistify Test Repo
     [Documentation]  Some of the scripts and tests from mistiy-test are handy.
     ...  Clone the repo so can use them.
     ssh.Set Client Configuration  timeout=3m
-    SSH Run  cd ~/projects
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/projects
     ${_o}=  SSH Run And Get Output
-    ...  git clone git@github.com:mistifyio/mistify-test.git  _delay=5s
+    ...  git clone git@github.com:mistifyio/mistify-test.git  _delay=10s
     Should Contain  ${_o}  Cloning into
     Should Contain  ${_o}  Checking connectivity... done.
     SSH Run  cd mistify-test
@@ -141,9 +158,9 @@ Clone The Mistify OS Repo
     ...  eventually build mistify-os.
 
     ssh.Set Client Configuration  timeout=3m
-    SSH Run  cd ~/projects
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/projects
     ${_o}=  SSH Run And Get Output
-    ...  git clone git@github.com:mistifyio/mistify-os.git  _delay=5s
+    ...  git clone git@github.com:mistifyio/mistify-os.git  _delay=10s
     Should Contain  ${_o}  Cloning into
     Should Contain  ${_o}  Checking connectivity... done.
     ssh.Set Client Configuration  timeout=3s
@@ -154,13 +171,13 @@ Install The Seed Toolchain
     ...  environment.
     ssh.Set Client Configuration  timeout=10m
     ${_c}=  catenate
-    ...  ~/projects/mistify-test/testlib/scripts/scp-nostrict
+    ...  ${MISTIFY_SDK_ROOT}/projects/mistify-test/testlib/scripts/scp-nostrict
     ...  ${MISTIFY_SEED_TOOLCHAIN_SCP}/${MISTIFY_SEED_TOOLCHAIN_FILE}
-    ...  ~/downloads
-    ${_v}=  Set Variable  ~/crosstool/variations
+    ...  ${MISTIFY_SDK_ROOT}/downloads
+    ${_v}=  Set Variable  ${MISTIFY_SDK_ROOT}/crosstool/variations
     ${_o}=  SSH Run And Get Output  ${_c}  _delay=10s
     Should Contain  ${_o}  100%
-    SSH Run  cd ~
+    SSH Run  cd ${MISTIFY_SDK_ROOT}
     ${_o}=  SSH Run And Get Output
     ...  git clone git@github.com:crosstool-ng/crosstool-ng.git crosstool
     ...  _delay=10s
@@ -168,42 +185,44 @@ Install The Seed Toolchain
     SSH Run  mkdir ${_v}
     SSH Run  cd ${_v}
     ${_o}=  SSH Run And Get Output
-    ...  tar xzf ~/downloads/${MISTIFY_SEED_TOOLCHAIN_FILE}
+    ...  tar xzf ${MISTIFY_SDK_ROOT}/downloads/${MISTIFY_SEED_TOOLCHAIN_FILE}
     Should Not Contain  ${_o}  Cannot open
     # This enables using the pre-built toolchain rather than attempting to
     # build it at this point.
     SSH Run  touch .${MISTIFY_SEED_TOOLCHAIN}-${MISTIFY_SEED_TOOLCHAIN_VERSION}-built
-    SSH Run  cd ~
+    ssh.Set Client Configuration  timeout=3s
     ${_p}=  catenate  SEPARATOR=
     ...  ${_v}/
     ...  ${MISTIFY_SEEDTOOLCHAIN}-${MISTIFY_SEEDTOOLCHAIN_VERSION}/bin/
     ...  ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-gcc
     SSH Run  export CC=${_p}
-    ${_o}=  SSH Run And Get Output  \$CC --help
-    Should Contain  ${o_}  Usage:  ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-cc
+    ${_o}=  SSH Run And Get Output  \$CC --help  _delay=3s
+    Should Contain  ${_o}  Usage: ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-gcc
     ${_p}=  catenate  SEPARATOR=
     ...  ${_v}/
     ...  ${MISTIFY_SEEDTOOLCHAIN}-${MISTIFY_SEEDTOOLCHAIN_VERSION}/bin/
     ...  ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-g++
     SSH Run  export CXX=${_p}
-    ssh.Set Client Configuration  timeout=3s
+    ${_o}=  SSH Run And Get Output  \$CXX --help  _delay=3s
+    Should Contain  ${_o}  Usage: ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-g++
+    SSH Run  env \| sort
 
 Install GNU Package
     [Documentation]  This installs a GNU package using autoconf.
     [Arguments]  ${_package}  ${_version}
     ...  ${_install}=install
     ...  ${_url}=http://ftp.gnu.org/gnu
+    ...  ${_flags}=${SPACE}
     Log Message  \nInstalling ${_package}-${_version}
     ssh.Set Client Configuration  timeout=5m
-    SSH Run  mkdir -p ~/tmp
-    SSH Run  cd ~/tmp
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
     ${_i}=  SSH Run And Get Return Code
     ...  wget ${_url}/${_package}/${_package}-${_version}.tar.gz
     ...  _delay=10s
     Should Be Equal As Integers  ${_i}  ${0}
     SSH Run  tar xzf ${_package}-${_version}.tar.gz
     SSH Run  cd ${_package}-${_version}
-    SSH Run  ./configure && make && sudo make ${_install}  _delay=15s
+    SSH Run  ${_flags} ./configure && make && sudo make ${_install}  _delay=15s
     ssh.Set Client Configuration  timeout=3s
 
 Build The Go Compiler
@@ -212,12 +231,38 @@ Build The Go Compiler
     ...  NOTE: This will also cause a clone of the buildroot and go repositories
     ...  and the go repo is very large. Thus the long timeout.
     ssh.Set Client Configuration  timeout=25m
-    SSH Run  cd ~/projects/mistify-os
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/projects/mistify-os
     ${_c}=  catenate
-    ...  ./buildmistify --toolchaindir ~/crosstool
+    ...  ./buildmistify --toolchaindir ${MISTIFY_SDK_ROOT}/crosstool
     ...  --toolchainprefix ${MISTIFY_SEEDTOOLCHAIN_PREFIX} --dryrun
     ${_r}=  SSH Run And Get Return Code  ${_c}  _delay=10s
     Should Be Equal As Integers  ${_r}  ${0}
+    ssh.Set Client Configuration  timeout=3s
+
+Build The Toolchain
+    [Documentation]  This uses the seed toolchain to build crosstools-ng for
+    ...  the Mistify-OS environment. This then becomes the toolchain which is
+    ...  used to build Mistify-OS using buildroot.
+    ssh.Set Client Configuration  timeout=45m
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/projects/mistify-os
+    # This part causes a clone of the toolchain repo but does not build it so
+    # that patches can be applied for the Mistify-OS environment.
+    ${_c}=  catenate
+    ...  CFLAGS=" -I/usr/include"
+    ..   LDFLAGS=" -L/usr/lib -lncurses"
+    ...  ./buildmistify --toolchaindir ${MISTIFY_SDK_ROOT}/toolchain
+    ...  --dryrun
+    ${_r}=  SSH Run And Get Return Code  ${_c}  _delay=10s
+    Should Be Equal As Integers  ${_r}  ${0}
+    # Patch the toolchain source.
+
+    # Build the patched toolchain.
+    ${_c}=  catenate
+    ...  CFLAGS=" -I/usr/include"
+    ..   LDFLAGS=" -L/usr/lib -lncurses"
+    ...  ./buildmistify --toolchaindir ${MISTIFY_SDK_ROOT}/toolchain
+   # ${_r}=  SSH Run And Get Return Code  ${_c}  _delay=10s
+
     ssh.Set Client Configuration  timeout=3s
 
 ####
