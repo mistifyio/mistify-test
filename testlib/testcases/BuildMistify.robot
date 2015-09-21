@@ -39,7 +39,7 @@ ${builddownloaddir}=	${mistifybuilddir}/downloads
 ...	Installing CLooG for host: done
 ...	Installing MPC for host: done
 ...	Installing binutils for host: done
-...	Installing pass-1 core C compiler: done
+...	Installing pass-1 core C gcc compiler: done
 ...	Installing kernel headers: done
 ...	Installing C library headers & start files: done
 ...	Installing pass-2 core C compiler: done
