@@ -203,5 +203,5 @@ Create User
     [Arguments]  ${_user}  ${_userid}
     Log To Console  \nCreating user: ${_user}
     Log Message  Creating account for ${_user} using ID ${_userid}
-    SSH Run  adduser -u ${${_userid}} -s `which bash` -D ${_user}
+    SSH Run  adduser -u ${${_userid}} -s `which bash` -D ${_user} -h /mistify/home/${_user}
 
