@@ -128,7 +128,7 @@ Set User Password
 
     Log Message  Unlocking user account: ${_user}
     ${_o}=  SSH Run And Get Output  passwd -u ${_user}
-    Should Contain  ${_o}  Password for ${_user} changed by root
+    # Should Contain  ${_o}  Password for ${_user} changed by root
     Log Message  Setting null password for ${_user}
     ${_o}=  SSH Run And Get Output  passwd -d ${_user}
     Should Contain  ${_o}  Password for ${_user} changed by root
@@ -203,5 +203,5 @@ Create User
     [Arguments]  ${_user}  ${_userid}
     Log To Console  \nCreating user: ${_user}
     Log Message  Creating account for ${_user} using ID ${_userid}
-    SSH Run  adduser -u ${${_userid}} -s `which bash` -D ${_user} -h /mistify/home/${_user}
+    SSH Run  adduser -u ${${_userid}} -s `which bash` -D ${_user} -h /mistify/private/home/${_user}
 
