@@ -161,6 +161,7 @@ Start The Nodes
       \  ...  --diskimagesize ${MISTIFY_SDK_IMAGE_SIZE}
       \  ...  --uuid `uuidgen`
       \  ...  --mac ${MISTIFY_DEFAULT_MAC}${_m}
+      \  ...  --rammb ${MISTIFY_SDK_MEMORY}
       \  ssh.Write  ${_c}
       \  ssh.Read Until  random: nonblocking
       \  Detach Screen
