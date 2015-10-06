@@ -1,0 +1,16 @@
+jenkins_user: 'jenkins'
+jenkins_group: 'jenkins'
+jenkins_home: '/var/jenkins'
+jenkins_shell: '/bin/bash'
+jenkins_slave_labels: 'aws'
+jenkins_slave_executors: '2'
+
+lxc_user: "ubuntu"
+lxc_user_group: "ubuntu"
+lxc_user_home: "/home/ubuntu"
+
+git_username: omniti-devops
+git_usermail: devops@omniti.com
+
+mistify_agent_repo_name: mistify-agent-libvirt
+mistify_agent_repo_url: https://github.com/mistifyio/{{mistify_agent_repo_name}}
