@@ -3,3 +3,11 @@
 
 role "openvswitch", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/openvswitch.git"
 role "lxc", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/lxc.git"
+role "geerlingguy.java", "1.1.0"
+role "bobbyrenwick.pip"
+role "kbrebanov.unzip"
+role "laggyluke.add-ssh-keys-from-github"
+role "yaegashi.blockinfile"
+role "gotansible.golang", "0.1.4"
+role "azavea.ruby", "0.3.0"
+role "ANXS.timezone"
