@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+#^syntax detection
+
+role "openvswitch", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/openvswitch.git"
+role "lxc", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/lxc.git"

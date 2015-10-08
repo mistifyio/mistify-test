@@ -1,0 +1,17 @@
+[user]
+ name={{ git_username }}
+ email={{ git_usermail }}
+
+[color]
+ui=true
+
+[core]
+editor={{ git_coreeditor|default('vi') }}
+user={{ git_username }}
+email={{ git_usermail }}
+
+[push]
+default={{ git_pushdefault|default('current')  }}
+
+[url "git@github.com:"]
+insteadOf=https://github.com/

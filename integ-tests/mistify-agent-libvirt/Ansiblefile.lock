@@ -1,0 +1,18 @@
+GIT
+  remote: git@gitlab.omniti.com:omniti-ansible/lxc.git
+  ref: master
+  sha: b682c58d37b0f803a829f50c2799ad8885c06ef9
+  specs:
+    lxc (1.0.0)
+
+GIT
+  remote: git@gitlab.omniti.com:omniti-ansible/openvswitch.git
+  ref: master
+  sha: 101bfdee2b39e438e5f035223733aecd8a9896eb
+  specs:
+    openvswitch (1.0.0)
+
+DEPENDENCIES
+  lxc (= 1.0.0)
+  openvswitch (= 1.0.0)
+

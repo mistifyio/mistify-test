@@ -37,8 +37,15 @@
       - 'vars/vaulted_vars'
   roles:
     - yaegashi.blockinfile
-    - { role: security, tags: security }
-    - { role: general-slave-setup }
+    - { role: general-setup }
+  tasks:
+    - name: Copy Ubuntu private ssh key
+      copy:
+        content: "{{ ubuntu_ssh_key }}"
+        dest: "{{ ubuntu_key_file }}"
+        mode: 0600
+        owner: ubuntu
+
 
 # Install as ubuntu
 - hosts: go-mistify-libvirt-test
@@ -47,14 +54,14 @@
   roles:
     - { role: kbrebanov.unzip }
     - { role: bobbyrenwick.pip }
-    - { role: install-common-python-packages }
+    - { role: required-python-modules }
     - role: gotansible.golang
       golang_version: 1.4.2
       golang_per_user: false
       tags: golang
-    - { role: install-golang-dependencies, tags: ['golang'] }
-    - { role: install-openvswitch }
-    - { role: configure-mistify }
+    - { role: golang-deps, tags: ['golang'] }
+    - { role: openvswitch }
+    - { role: mistify-openvswitch-config }
     - role: laggyluke.add-ssh-keys-from-github
       add_ssh_keys_from_github:
         usernames:
