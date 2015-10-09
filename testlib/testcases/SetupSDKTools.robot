@@ -70,12 +70,15 @@ Setup Tools In All SDK Instances
       \  Log Message  \nSSH to node: ${_n}
       \  SSH As User To Node  ${USER}  ${_n}
       \  Create Needed Directories  ${USER}
+      \  Install unzip
+      \  Install autotools Package  texinfo  4.13  _flags=LDFLAGS=" -L/usr/lib -lncurses"
+      \  Install autotools Package  ccache  3.2.3  _url=http://samba.org/ftp
+      \  Install Mercurial
+      \  Install Python PIP
+      \  Install Robot Framework
       \  Authenticate With Github
       \  Clone The Mistify Test Repo
       \  Clone The Mistify OS Repo
-      \  Install GNU Package  texinfo  4.13  _flags=LDFLAGS=" -L/usr/lib -lncurses"
-      \  Install Python PIP
-      \  Install Robot Framework
       \  SSH Run  exit
 
 *** Keywords ***
@@ -95,15 +98,58 @@ Create Needed Directories
     SSH Run  mkdir ${MISTIFY_SDK_ROOT}/projects
     SSH Run  mkdir ${MISTIFY_SDK_ROOT}/tmp
 
-Install Development Headers
-    [Documentation]  This copies the development headers from the seed build of
-    ...  mistify-os.
-    ${_c}=  catenate
-    ...  ${MISTIFY_SDK_ROOT}/projects/mistify-test/testlib/scripts/scp-nostrict -r
-    ...  ${MISTIFY_SDK_HOST_IP}:${BUILDDIR}/staging/usr/include/*
-    ...  ${MISTIFY_SDK_SYSROOT}/usr/include/
-    ${_o}=  SSH Run And Get Output  ${_c}  _delay=10s
-    Should Contain  ${_o}  zlib.h
+Install autotools Package
+    [Documentation]  This installs a GNU package using autoconf.
+    [Arguments]  ${_package}  ${_version}
+    ...  ${_install}=install
+    ...  ${_url}=http://ftp.gnu.org/gnu
+    ...  ${_flags}=${SPACE}
+    Log Message  \nInstalling ${_package}-${_version}
+    ssh.Set Client Configuration  timeout=5m
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
+    ${_i}=  SSH Run And Get Return Code
+    ...  wget ${_url}/${_package}/${_package}-${_version}.tar.gz
+    ...  _delay=10s
+    Should Be Equal As Integers  ${_i}  ${0}
+    SSH Run  tar xzf ${_package}-${_version}.tar.gz
+    SSH Run  cd ${_package}-${_version}
+    SSH Run  ${_flags} ./configure --prefix=/usr && make && sudo make ${_install}  _delay=15s
+    ssh.Set Client Configuration  timeout=3s
+
+Install unzip
+    [Documentation]  The busybox version of unzip works in most cases but
+    ...  doesn't always. So build natively.
+    Log Message  \nInstalling unzip.
+    ssh.Set Client Configuration  timeout=5m
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
+    ${_i}=  SSH Run And Get Return Code
+    ...  wget http://downloads.sourceforge.net/infozip/unzip60.tar.gz
+    ...  _delay=10s
+    Should Be Equal As Integers  ${_i}  ${0}
+    SSH Run  tar xzf unzip60.tar.gz
+    SSH Run  cd unzip60
+    SSH Run  make CC=gcc -f unix/Makefile generic  _delay=15s
+    SSH Run  sudo make prefix=/usr MANDIR=/usr/share/man/man1 -f unix/Makefile install
+    ...  _delay=15s
+    ssh.Set Client Configuration  timeout=3s
+
+Install Mercurial
+    [Documentation]  Some buildroot packages use hg to clone the source.
+    ...  Mercurial provides this but because of the embedded paths.
+    ...  in python can't be installed using pip. So get the source and
+    ...  compile locally.
+    [Arguments]  ${_version}=3.5.2
+    Log Message  \nInstalling Mercurial.
+    ssh.Set Client Configuration  timeout=5m
+    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
+    ${_i}=  SSH Run And Get Return Code
+    ...  wget https://www.mercurial-scm.org/release/mercurial-${_version}.tar.gz
+    ...  _delay=10s
+    Should Be Equal As Integers  ${_i}  ${0}
+    SSH Run  tar xzf mercurial-${_version}.tar.gz
+    SSH Run  cd mercurial-${_version}
+    SSH Run  sudo make install  _delay=15s
+    ssh.Set Client Configuration  timeout=3s
 
 Install Python PIP
     [Documentation]  PIP is used to install Python packages.
@@ -123,7 +169,7 @@ Install Robot Framework
     ...  Robot Framework is installed.
     ssh.Set Client Configuration  timeout=3m
     ${_o}=  SSH Run And Get Output  sudo pip install robotframework
-    ...  _delay=5s
+    ...  _delay=10s
     Should Contain  ${_o}  Successfully installed robotframework
     ssh.Set Client Configuration  timeout=3s
 
@@ -152,7 +198,6 @@ Clone The Mistify Test Repo
 
     ssh.Set Client Configuration  timeout=3s
 
-
 Clone The Mistify OS Repo
     [Documentation]  This the reason for doing all this. The objective is to.
     ...  eventually build mistify-os.
@@ -165,108 +210,19 @@ Clone The Mistify OS Repo
     Should Contain  ${_o}  Checking connectivity... done.
     ssh.Set Client Configuration  timeout=3s
 
-Install The Seed Toolchain
-    [Documentation]  This is a bit of a cheat at the moment. Install a pre-built
-    ...  crosstools-ng toolchain which can be used to bootstrap the build
-    ...  environment.
-    ssh.Set Client Configuration  timeout=10m
+####
+# throwaway
+Install Development Headers
+    [Documentation]  This copies the development headers from the seed build of
+    ...  mistify-os.
     ${_c}=  catenate
-    ...  ${MISTIFY_SDK_ROOT}/projects/mistify-test/testlib/scripts/scp-nostrict
-    ...  ${MISTIFY_SEED_TOOLCHAIN_SCP}/${MISTIFY_SEED_TOOLCHAIN_FILE}
-    ...  ${MISTIFY_SDK_ROOT}/downloads
-    ${_v}=  Set Variable  ${MISTIFY_SDK_ROOT}/crosstool/variations
+    ...  ${MISTIFY_SDK_ROOT}/projects/mistify-test/testlib/scripts/scp-nostrict -r
+    ...  ${MISTIFY_SDK_HOST_IP}:${BUILDDIR}/staging/usr/include/*
+    ...  ${MISTIFY_SDK_SYSROOT}/usr/include/
     ${_o}=  SSH Run And Get Output  ${_c}  _delay=10s
-    Should Contain  ${_o}  100%
-    SSH Run  cd ${MISTIFY_SDK_ROOT}
-    ${_o}=  SSH Run And Get Output
-    ...  git clone git@github.com:crosstool-ng/crosstool-ng.git crosstool
-    ...  _delay=10s
-    Should Contain  ${_o}  Cloning into
-    SSH Run  mkdir ${_v}
-    SSH Run  cd ${_v}
-    ${_o}=  SSH Run And Get Output
-    ...  tar xzf ${MISTIFY_SDK_ROOT}/downloads/${MISTIFY_SEED_TOOLCHAIN_FILE}
-    Should Not Contain  ${_o}  Cannot open
-    # This enables using the pre-built toolchain rather than attempting to
-    # build it at this point.
-    SSH Run  touch .${MISTIFY_SEED_TOOLCHAIN}-${MISTIFY_SEED_TOOLCHAIN_VERSION}-built
-    ssh.Set Client Configuration  timeout=3s
-    ${_p}=  catenate  SEPARATOR=
-    ...  ${_v}/
-    ...  ${MISTIFY_SEEDTOOLCHAIN}-${MISTIFY_SEEDTOOLCHAIN_VERSION}/bin/
-    ...  ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-gcc
-    SSH Run  export CC=${_p}
-    ${_o}=  SSH Run And Get Output  \$CC --help  _delay=3s
-    Should Contain  ${_o}  Usage: ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-gcc
-    ${_p}=  catenate  SEPARATOR=
-    ...  ${_v}/
-    ...  ${MISTIFY_SEEDTOOLCHAIN}-${MISTIFY_SEEDTOOLCHAIN_VERSION}/bin/
-    ...  ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-g++
-    SSH Run  export CXX=${_p}
-    ${_o}=  SSH Run And Get Output  \$CXX --help  _delay=3s
-    Should Contain  ${_o}  Usage: ${MISTIFY_SEEDTOOLCHAIN_PREFIX}-g++
-    SSH Run  env \| sort
-
-Install GNU Package
-    [Documentation]  This installs a GNU package using autoconf.
-    [Arguments]  ${_package}  ${_version}
-    ...  ${_install}=install
-    ...  ${_url}=http://ftp.gnu.org/gnu
-    ...  ${_flags}=${SPACE}
-    Log Message  \nInstalling ${_package}-${_version}
-    ssh.Set Client Configuration  timeout=5m
-    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
-    ${_i}=  SSH Run And Get Return Code
-    ...  wget ${_url}/${_package}/${_package}-${_version}.tar.gz
-    ...  _delay=10s
-    Should Be Equal As Integers  ${_i}  ${0}
-    SSH Run  tar xzf ${_package}-${_version}.tar.gz
-    SSH Run  cd ${_package}-${_version}
-    SSH Run  ${_flags} ./configure && make && sudo make ${_install}  _delay=15s
-    ssh.Set Client Configuration  timeout=3s
-
-Build The Go Compiler
-    [Documentation]  The cross toolchain seed has been installed. Now can build
-    ...  the go compiler.
-    ...  NOTE: This will also cause a clone of the buildroot and go repositories
-    ...  and the go repo is very large. Thus the long timeout.
-    ssh.Set Client Configuration  timeout=25m
-    SSH Run  cd ${MISTIFY_SDK_ROOT}/projects/mistify-os
-    ${_c}=  catenate
-    ...  ./buildmistify --toolchaindir ${MISTIFY_SDK_ROOT}/crosstool
-    ...  --toolchainprefix ${MISTIFY_SEEDTOOLCHAIN_PREFIX} --dryrun
-    ${_r}=  SSH Run And Get Return Code  ${_c}  _delay=10s
-    Should Be Equal As Integers  ${_r}  ${0}
-    ssh.Set Client Configuration  timeout=3s
-
-Build The Toolchain
-    [Documentation]  This uses the seed toolchain to build crosstools-ng for
-    ...  the Mistify-OS environment. This then becomes the toolchain which is
-    ...  used to build Mistify-OS using buildroot.
-    ssh.Set Client Configuration  timeout=45m
-    SSH Run  cd ${MISTIFY_SDK_ROOT}/projects/mistify-os
-    # This part causes a clone of the toolchain repo but does not build it so
-    # that patches can be applied for the Mistify-OS environment.
-    ${_c}=  catenate
-    ...  CFLAGS=" -I/usr/include"
-    ..   LDFLAGS=" -L/usr/lib -lncurses"
-    ...  ./buildmistify --toolchaindir ${MISTIFY_SDK_ROOT}/toolchain
-    ...  --dryrun
-    ${_r}=  SSH Run And Get Return Code  ${_c}  _delay=10s
-    Should Be Equal As Integers  ${_r}  ${0}
-    # Patch the toolchain source.
-
-    # Build the patched toolchain.
-    ${_c}=  catenate
-    ...  CFLAGS=" -I/usr/include"
-    ..   LDFLAGS=" -L/usr/lib -lncurses"
-    ...  ./buildmistify --toolchaindir ${MISTIFY_SDK_ROOT}/toolchain
-   # ${_r}=  SSH Run And Get Return Code  ${_c}  _delay=10s
-
-    ssh.Set Client Configuration  timeout=3s
+    Should Contain  ${_o}  zlib.h
 
 ####
-
 Setup Testsuite
     ${containername}=	Container Name
     Set Suite Variable  ${containername}
