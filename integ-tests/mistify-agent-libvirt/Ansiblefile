@@ -1,13 +1,14 @@
 #!/usr/bin/env ruby
 #^syntax detection
+site "https://galaxy.ansible.com/api/v1"
 
 role "openvswitch", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/openvswitch.git"
 role "lxc", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/lxc.git"
-role "geerlingguy.java", "1.1.0"
+role "geerlingguy.java"
 role "bobbyrenwick.pip"
 role "kbrebanov.unzip"
 role "laggyluke.add-ssh-keys-from-github"
 role "yaegashi.blockinfile"
-role "gotansible.golang", "0.1.4"
-role "azavea.ruby", "0.3.0"
+role "gotansible.golang"
+role "azavea.ruby"
 role "ANXS.timezone"
