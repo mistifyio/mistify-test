@@ -18,6 +18,17 @@ gojunitbinary = gopath + '/bin/go-junit-report'
 
 print "Using GOPATH:", gopath
 print "Using go binary:", gobinary
+print "Using go junit binary:", gojunitbinary
+
+print "Executing get go junit report binary"
+try:
+    getjunitcmd = [gobinary, 'get', 'github.com/jstemmer/go-junit-report']
+    print 'CMD:', ' '.join(getjunitcmd)
+    output = subprocess.check_output(getjunitcmd, stderr=subprocess.STDOUT)
+    print output
+except subprocess.CalledProcessError as e:
+    print "error>", e.output, '<'
+    exit(1)
 
 print "Executing gotest..."
 try:
