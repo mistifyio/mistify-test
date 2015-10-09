@@ -42,14 +42,14 @@
 - name: Setup git config
   template:
     src: gitconfig.j2
-    dest: "{{lxc_user_home}}/.gitconfig"
-    owner: "{{lxc_user}}"
-    group: "{{lxc_group}}"
+    dest: "{{default_user_home}}/.gitconfig"
+    owner: "{{default_user}}"
+    group: "{{default_group}}"
   tags: git
 
 - name: Edit bash.rc
   blockinfile:
-    dest: "{{lxc_user}}/.bashrc"
+    dest: "{{default_user_home}}/.bashrc"
     insertafter: EOF
     content: |
       export EDITOR=vi
