@@ -5,21 +5,6 @@
     - python-dev
     - lxc-dev
 
-- name: Install Boto
-  pip:
-    name: boto
-    version: 2.37.0
-
-- name: Install Shell
-  pip:
-    name: sh
-    version: 1.11
-
-- name: Install gitpython
-  pip:
-    name: gitpython
-    version: 1.0.1
-
 - name: Install lxcpython
   pip:
     name: lxc-python2
