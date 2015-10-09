@@ -5,7 +5,7 @@
       stat: path={{ lookup('env','HOME') }}/.ssh/id_rsa.pub
       register: local_pub_key_exists
 
-      # Add code to generate a set of keys in the event a public key does not exist
+      # TODO: Add code to generate a set of keys in the event a public key does not exist
     - name: Grab public key off machine
       shell: "cat {{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
       register: local_pub_key
