@@ -46,12 +46,6 @@
     - yaegashi.blockinfile
     - { role: general-setup }
   tasks:
-    # - name: Copy Ubuntu private ssh key
-    #   copy:
-    #     content: "{{ ubuntu_ssh_key }}"
-    #     dest: "{{ ubuntu_key_file }}"
-    #     mode: 0600
-    #     owner: ubuntu
 
 
 # Install as ubuntu
