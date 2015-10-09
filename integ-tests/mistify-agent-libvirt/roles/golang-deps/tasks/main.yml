@@ -4,4 +4,3 @@
   with_items:
     - libvirt-bin
     - libvirt-dev
-  tags: golang_deps
