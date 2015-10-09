@@ -127,7 +127,7 @@ mac:,\
 pxeoptionrom:,\
 netboot,\
 rammb,\
-ramdisksize,\
+ramdisksize:,\
 resetdefaults,\
 verbose,\
 dryrun,\
@@ -320,7 +320,7 @@ $netbootoptions \
 -machine accel=kvm -cpu host -smp 2 \
 -uuid $uuid \
 -global isa-fdc.driveA= \
--append 'noapic acpi=off ramdisk_size=$ramdisksize rw console=ttyS0 zfs=auto' \
+-append "noapic acpi=off ramdisk_size=$ramdisksize rw console=ttyS0 zfs=auto" \
 -nographic -m $rammb \
 -device e1000,netdev=net0,mac=$mac \
 -netdev tap,ifname=$tap,id=net0,script=no

@@ -269,7 +269,7 @@ Restart Node With New MAC Address
     ...  initial disk image and is intended to be used once after a node
     ...  has been brought to a desired state. This helps return a node to
     ...  the known state at a later time.
-    [Arguments]  ${_node}  ${_uuid}  ${_mac}
+    [Arguments]  ${_node}  ${_uuid}  ${_mac}  ${_ramdisksize}=200000
     # Be sure the disk image is updated.
     Use Node  ${_node}
     ssh.Set Client Configuration  timeout=5s
@@ -283,6 +283,7 @@ Restart Node With New MAC Address
     ...  --diskimage ~/images/${_node}.img --tap ${_node}
     ...  --uuid ${_uuid}
     ...  --mac ${_mac}
+    ...  --ramdisksize ${_ramdisksize}
     Log To Console  Generating node start script for node: ${_node}
     ssh.Write  mkdir -p ~/tmp; echo ${_c} >~/tmp/start-${_node}
     ssh.Write  chmod +x ~/tmp/start-${_node}

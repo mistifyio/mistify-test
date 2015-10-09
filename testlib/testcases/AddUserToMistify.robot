@@ -76,6 +76,7 @@ Add User To All SDK Instances
       \  ${_uuid}=  Get From Dictionary  ${_a}  uuid
       \  ${_mac}=  Get From Dictionary  ${_a}  mac
       \  Restart Node With New MAC Address  ${_n}  ${_uuid}  ${_mac}
+      \  ...  _ramdisksize=${MISTIFY_SDK_RAMDISK_SIZE}
       \  Log To Console  \nLogin to node: ${_n}
       \  Attach Screen  ${_n}
       \  Login To Mistify
