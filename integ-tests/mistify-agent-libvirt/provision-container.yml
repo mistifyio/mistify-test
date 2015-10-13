@@ -1,0 +1,93 @@
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Check if public key exists
+      stat: path={{ lookup('env','HOME') }}/.ssh/id_rsa.pub
+      register: local_pub_key_exists
+
+      # TODO: Add code to generate a set of keys in the event a public key does not exist
+    - name: Grab public key off machine
+      shell: "cat {{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
+      register: local_pub_key
+
+    - name: Create a started container
+      lxc_container:
+        name: go-mistify-libvirt-test
+        container_log: true
+        template: download
+        state: started
+        template_options: --dist ubuntu --arch amd64 --release trusty
+        config: "$HOME/.config/lxc/default.conf"
+        container_command: |
+          apt-get update
+          apt-get install -y openssh-server apt-transport-https
+          mkdir -p /root/.ssh
+          mkdir -p {{lxc_user_home}}/.ssh
+          chown -R {{lxc_user}}:{{lxc_user_group}} {{lxc_user_home}}/.ssh
+          echo {{local_pub_key.stdout}} > /root/.ssh/authorized_keys
+          echo {{local_pub_key.stdout}} > {{lxc_user_home}}/.ssh/authorized_keys
+          echo StrictHostKeyChecking no > /root/.ssh/config
+          echo StrictHostKeyChecking no > {{lxc_user_home}}/.ssh/config
+          sudo service ssh restart
+      register: lxc_container_info
+      tags: test_only
+
+        # dynamically update inventory to make it available down the playbook
+    - name: register new container hostname
+      add_host: name="{{lxc_container_info.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test"
+      tags: test_only
+
+# Install as root, to setup ubuntu as a sudoer
+- hosts: go-mistify-libvirt-test
+  remote_user: root
+  vars_files:
+      - 'vars/vaulted_vars'
+  roles:
+    - yaegashi.blockinfile
+    - { role: general-setup }
+  tasks:
+
+
+# Install as ubuntu
+- hosts: go-mistify-libvirt-test
+  remote_user: ubuntu
+  sudo: yes
+  roles:
+    - { role: kbrebanov.unzip }
+    - { role: bobbyrenwick.pip }
+    - { role: required-python-modules }
+    - role: gotansible.golang
+      golang_version: 1.4.2
+      golang_per_user: false
+      tags: golang
+    - { role: golang-deps, tags: ['golang'] }
+    - { role: openvswitch, tags: ['openvswitch'] }
+    - { role: mistify-openvswitch-config, tags: ['openvswitch','openvswitch-config'] }
+    - role: laggyluke.add-ssh-keys-from-github
+      add_ssh_keys_from_github:
+        usernames:
+          - omniti-devops
+  tasks:
+    - name: Copy go test executor script to container
+      template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
+      tags: test_only
+    - name: Run go kvm tests
+      shell: |
+          export WORKSPACE={{lxc_user_home}}/workspace
+          export GOPATH=$WORKSPACE
+          export PATH=/usr/local/go/bin:$PATH
+          export REPO={{mistify_agent_repo_name}}
+          export CHECKOUT_DIR=$WORKSPACE/src/github.com/mistifyio/$REPO
+          mkdir -p $WORKSPACE
+          rm -rf $CHECKOUT_DIR
+          cd $WORKSPACE
+          git clone {{mistify_agent_repo_url}} $CHECKOUT_DIR
+          python /tmp/go_test_executor.py
+      tags: test_only
+  tags:
+
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Copy test results to localhost
+      shell: scp {{lxc_user}}@{{lxc_container_info.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .

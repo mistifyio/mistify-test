@@ -1,0 +1,82 @@
+GIT
+  remote: git@gitlab.omniti.com:omniti-ansible/lxc.git
+  ref: master
+  sha: b682c58d37b0f803a829f50c2799ad8885c06ef9
+  specs:
+    lxc (1.0.0)
+
+GIT
+  remote: git@gitlab.omniti.com:omniti-ansible/openvswitch.git
+  ref: master
+  sha: 101bfdee2b39e438e5f035223733aecd8a9896eb
+  specs:
+    openvswitch (1.0.0)
+
+GIT
+  remote: https://github.com/ANXS/timezone
+  ref: master
+  sha: 9a77595bf89fc2c255c7c36c18a9cb113911144d
+  specs:
+    ANXS.timezone (0.0.0)
+
+GIT
+  remote: https://github.com/azavea/ansible-ruby
+  ref: master
+  sha: 36f748547a988945fce1d1276bf442fe59bc2245
+  specs:
+    azavea.ruby (0.0.0)
+
+GIT
+  remote: https://github.com/bobbyrenwick/ansible-pip
+  ref: master
+  sha: 004b422b22237515b0a8a6244a77fadb96312309
+  specs:
+    bobbyrenwick.pip (0.0.0)
+
+GIT
+  remote: https://github.com/geerlingguy/ansible-role-java
+  ref: master
+  sha: 6b016b180881faa265279d2a9bb78647756e3b67
+  specs:
+    geerlingguy.java (0.0.0)
+
+GIT
+  remote: https://github.com/gotansible/golang
+  ref: master
+  sha: 98139bc2299f68fadcaaf0d4bb155d9e45a566e1
+  specs:
+    gotansible.golang (0.0.0)
+
+GIT
+  remote: https://github.com/kbrebanov/ansible-unzip
+  ref: master
+  sha: 7d0984b942561964946ebfc2e4d60ef03f26fb59
+  specs:
+    kbrebanov.unzip (0.0.0)
+
+GIT
+  remote: https://github.com/laggyluke/ansible-role-add-ssh-keys-from-github
+  ref: master
+  sha: 43a64f22037ee453f686b29e8b4b2449e3a42db9
+  specs:
+    laggyluke.add-ssh-keys-from-github (0.0.0)
+
+GIT
+  remote: https://github.com/yaegashi/ansible-role-blockinfile
+  ref: master
+  sha: 760ab9e964fb9a5109a23ac6a0b642984b4e3fcb
+  specs:
+    yaegashi.blockinfile (0.0.0)
+
+DEPENDENCIES
+  ANXS.timezone (>= 0)
+  azavea.ruby (>= 0)
+  bobbyrenwick.pip (>= 0)
+  geerlingguy.java (>= 0)
+  gotansible.golang (>= 0)
+  kbrebanov.unzip (>= 0)
+  laggyluke.add-ssh-keys-from-github (>= 0)
+  lxc (= 1.0.0)
+  openvswitch (= 1.0.0)
+  yaegashi.blockinfile (>= 0)
+

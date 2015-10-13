@@ -1,0 +1,9 @@
+---
+- name: Check if mistify bridge exists
+  shell: "ovs-vsctl list br mistify0"
+  register: ovsctl_bridge_list_result
+  ignore_errors: True
+
+- name: Add mistify bridge to openvswitch
+  shell: "ovs-vsctl add-br mistify0"
+  when: not ovsctl_bridge_list_result.rc == 0
