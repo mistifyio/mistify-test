@@ -4,11 +4,13 @@
     - name: Check if public key exists
       stat: path={{ lookup('env','HOME') }}/.ssh/id_rsa.pub
       register: local_pub_key_exists
+      tags: test_only
 
       # TODO: Add code to generate a set of keys in the event a public key does not exist
     - name: Grab public key off machine
       shell: "cat {{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
       register: local_pub_key
+      tags: test_only
 
     - name: Create a started container
       lxc_container:
@@ -71,18 +73,29 @@
     - name: Copy go test executor script to container
       template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
       tags: test_only
+    - name: Delete checkout dir on container if exists
+      file: path={{remote_checkout_dir}} state=absent
+      tags: test_only
+    - name: Create checkout dir on container
+      file: path={{remote_checkout_dir}} state=directory owner={{lxc_user}} group={{lxc_user_group}} mode=0775 recurse=yes
+      tags: test_only
+    - name: Copy existing checkout to container
+      copy: src={{local_checkout_dir}} dest={{remote_checkout_dir}}
+      when: use_existing_checkout
+      tags: test_only
+    - name: Clone repo on container
+      shell: git clone {{mistify_agent_repo_url}} {{remote_checkout_dir}}
+      when: not use_existing_checkout
+      tags: test_only
     - name: Run go kvm tests
       shell: |
-          export WORKSPACE={{lxc_user_home}}/workspace
-          export GOPATH=$WORKSPACE
-          export PATH=/usr/local/go/bin:$PATH
-          export REPO={{mistify_agent_repo_name}}
-          export CHECKOUT_DIR=$WORKSPACE/src/github.com/mistifyio/$REPO
-          mkdir -p $WORKSPACE
-          rm -rf $CHECKOUT_DIR
-          cd $WORKSPACE
-          git clone {{mistify_agent_repo_url}} $CHECKOUT_DIR
-          python /tmp/go_test_executor.py
+        export WORKSPACE={{lxc_user_home}}/workspace
+        export GOPATH=$WORKSPACE
+        export PATH=/usr/local/go/bin:$PATH
+        export REPO={{mistify_agent_repo_name}}
+        export CHECKOUT_DIR={{remote_checkout_dir}}
+        cd $WORKSPACE
+        python /tmp/go_test_executor.py
       tags: test_only
   tags:
 

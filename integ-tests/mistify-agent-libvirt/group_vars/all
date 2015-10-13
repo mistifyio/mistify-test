@@ -7,3 +7,7 @@ git_usermail: devops@omniti.com
 
 mistify_agent_repo_name: mistify-agent-libvirt
 mistify_agent_repo_url: https://github.com/mistifyio/{{mistify_agent_repo_name}}
+
+use_existing_checkout: true
+local_checkout_dir: "{{ lookup('env','WORKSPACE') }}/{{mistify_agent_repo_name}}/"
+remote_checkout_dir: "{{lxc_user_home}}/workspace/src/github.com/mistifyio/{{mistify_agent_repo_name}}/"
