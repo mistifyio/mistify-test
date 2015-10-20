@@ -70,6 +70,10 @@
         usernames:
           - omniti-devops
   tasks:
+    - name: Install required packages
+      action: apt pkg={{item}} state=present
+      with_items:
+        - qemu-kvm
     - name: Copy go test executor script to container
       template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
       tags: test_only
