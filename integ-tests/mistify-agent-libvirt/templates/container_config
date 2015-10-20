@@ -1,0 +1,4 @@
+lxc.hook.autodev=/var/lib/lxc/{{test_container_name}}/autodev
+
+# /dev/net/tun
+lxc.cgroup.devices.allow = c 10:200 rwm

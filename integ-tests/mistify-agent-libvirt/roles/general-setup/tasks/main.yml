@@ -8,6 +8,7 @@
     - python-httplib2
     - apt-file
     - software-properties-common
+    - qemu-kvm
 
 - name: Add ansible apt repository
   apt_repository: repo='ppa:ansible/ansible' state=present update_cache=yes

@@ -38,6 +38,13 @@
     - name: register new container hostname
       add_host: name="{{lxc_container_info.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test"
       tags: test_only
+    - name: Ensure container config dir exists
+      file: path="/var/lib/{{test_container_name}}" state=directory owner=jenkins group=jenkins mode=777
+      sudo: yes
+    - name: Add openvswitch hook to container
+      template:  src="templates/autodev" dest="/var/lib/{{test_container_name}}/autodev" mode=0755
+    - name: Add lxc config to handle openvswitch quirks
+      template: src="templates/container_config" dest="/var/lib/{{test_container_name}}/config"
 
 # Install as root, to setup ubuntu as a sudoer
 - hosts: go-mistify-libvirt-test
@@ -70,10 +77,6 @@
         usernames:
           - omniti-devops
   tasks:
-    - name: Install required packages
-      action: apt pkg={{item}} state=present
-      with_items:
-        - qemu-kvm
     - name: Copy go test executor script to container
       template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
       tags: test_only
