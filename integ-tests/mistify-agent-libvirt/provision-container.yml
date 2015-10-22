@@ -122,7 +122,7 @@
       tags: ['test_only','openvswitch_setup_only']
 
     - pause: seconds=3
-  tags: ['secondstart', 'provision_only']
+  tags: ['secondstart', 'provision_only','checkout_src']
 
 - hosts: go-mistify-libvirt-test-secondstart
   remote_user: ubuntu
@@ -131,25 +131,25 @@
   tasks:
     - name: Copy go test executor script to container
       template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
-      tags: test_only
+      tags: ['test_only', 'checkout_src']
 
     - name: Delete checkout dir on container if exists
       file: path={{remote_checkout_dir}} state=absent
-      tags: test_only
+      tags: ['test_only', 'checkout_src']
 
     - name: Create checkout dir on container
       file: path={{remote_checkout_dir}} state=directory owner={{lxc_user}} group={{lxc_user_group}} mode=0775 recurse=yes
-      tags: test_only
+      tags: ['test_only', 'checkout_src']
 
     - name: Copy existing checkout to container
       copy: src={{local_checkout_dir}} dest={{remote_checkout_dir}}
       when: use_existing_checkout
-      tags: test_only
+      tags: ['test_only', 'checkout_src']
 
     - name: Clone repo on container
       shell: git clone {{mistify_agent_repo_url}} {{remote_checkout_dir}}
       when: not use_existing_checkout
-      tags: test_only
+      tags: ['test_only', 'checkout_src']
 
     - name: Run go kvm tests
       shell: |
