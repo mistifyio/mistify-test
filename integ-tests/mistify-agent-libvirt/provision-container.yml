@@ -112,6 +112,7 @@
         name: "{{test_container_name}}"
         state: started
         container_log: true
+        container_command: sleep 3
       register: lxc_container_info_restarted
 
     - name: register new container hostname
@@ -119,6 +120,7 @@
       tags: ['test_only','openvswitch_setup_only']
 
     - pause: seconds=3
+  tags: secondstart
 
 - hosts: go-mistify-libvirt-test-secondstart
   remote_user: ubuntu
@@ -157,10 +159,15 @@
         cd $WORKSPACE
         python /tmp/go_test_executor.py
       tags: test_only
-  tags:
+  tags: secondstart
 
 - hosts: localhost
   connection: local
   tasks:
     - name: Copy test results to localhost
       shell: scp {{lxc_user}}@{{lxc_container_info_restarted.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
+    # - name: Destroy the container
+    #   lxc_container:
+    #     name: "{{test_container_name}}"
+    #     state: absent
+
