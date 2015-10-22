@@ -1,5 +1,7 @@
 #!/bin/bash
-
+echo "arguments: $*" > /tmp/test
+echo "environment:" >> /tmp/test
+env | grep LXC >> /tmp/test
 cd ${LXC_ROOTFS_MOUNT}/dev
 mkdir net
 mknod net/tun c 10 200

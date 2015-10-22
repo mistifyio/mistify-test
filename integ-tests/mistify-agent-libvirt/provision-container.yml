@@ -4,25 +4,45 @@
     - name: Check if public key exists
       stat: path={{ lookup('env','HOME') }}/.ssh/id_rsa.pub
       register: local_pub_key_exists
-      tags: test_only
+      tags: ['test_only', 'create_only','openvswitch_setup_only']
 
       # TODO: Add code to generate a set of keys in the event a public key does not exist
     - name: Grab public key off machine
       shell: "cat {{ lookup('env','HOME') }}/.ssh/id_rsa.pub"
       register: local_pub_key
-      tags: test_only
+      tags: ['test_only', 'create_only','openvswitch_setup_only']
 
-    - name: Create a started container
+    - name: Add lxc config to handle openvswitch quirks
+      template: src="templates/container_config" dest="/tmp/{{test_container_name}}-lxc-config"
+      sudo: yes
+      tags: openvswitch_setup_only
+
+    - name: Create the test container
       lxc_container:
-        name: go-mistify-libvirt-test
+        name: "{{test_container_name}}"
         container_log: true
         template: download
-        state: started
+        state: stopped
         template_options: --dist ubuntu --arch amd64 --release trusty
-        config: "$HOME/.config/lxc/default.conf"
+        config: "/tmp/{{test_container_name}}-lxc-config"
+      register: lxc_container_info
+      tags: ['test_only', 'create_only', 'openvswitch_setup_only']
+
+    - name: Ensure container config dir exists
+      file: path="/var/lib/lxc/{{test_container_name}}" state=directory mode=0755
+      tags: openvswitch_setup_only
+      sudo: yes
+
+    - name: Add openvswitch hook to container
+      template:  src="templates/autodev" dest="/var/lib/lxc/{{test_container_name}}/autodev" mode=0755
+      sudo: yes
+      tags: openvswitch_setup_only
+
+    - name: Start container and run user and ssh setup
+      lxc_container:
+        name: "{{test_container_name}}"
+        state: started
         container_command: |
-          apt-get update
-          apt-get install -y openssh-server apt-transport-https
           mkdir -p /root/.ssh
           mkdir -p {{lxc_user_home}}/.ssh
           chown -R {{lxc_user}}:{{lxc_user_group}} {{lxc_user_home}}/.ssh
@@ -30,21 +50,15 @@
           echo {{local_pub_key.stdout}} > {{lxc_user_home}}/.ssh/authorized_keys
           echo StrictHostKeyChecking no > /root/.ssh/config
           echo StrictHostKeyChecking no > {{lxc_user_home}}/.ssh/config
+          apt-get update
+          apt-get install -y --force-yes openssh-server apt-transport-https
           sudo service ssh restart
-      register: lxc_container_info
-      tags: test_only
+      tags: ['test_only', 'create_only', 'openvswitch_setup_only']
+      register: lxc_container_info_started
 
-        # dynamically update inventory to make it available down the playbook
     - name: register new container hostname
-      add_host: name="{{lxc_container_info.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test"
-      tags: test_only
-    - name: Ensure container config dir exists
-      file: path="/var/lib/{{test_container_name}}" state=directory owner=jenkins group=jenkins mode=777
-      sudo: yes
-    - name: Add openvswitch hook to container
-      template:  src="templates/autodev" dest="/var/lib/{{test_container_name}}/autodev" mode=0755
-    - name: Add lxc config to handle openvswitch quirks
-      template: src="templates/container_config" dest="/var/lib/{{test_container_name}}/config"
+      add_host: name="{{lxc_container_info_started.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test"
+      tags: ['test_only','openvswitch_setup_only']
 
 # Install as root, to setup ubuntu as a sudoer
 - hosts: go-mistify-libvirt-test
@@ -77,23 +91,35 @@
         usernames:
           - omniti-devops
   tasks:
+    # - name: Copy openvswitch setup script to container
+    #   template: src=templates/autodev dest=/tmp/autodev owner={{lxc_user}} group={{lxc_user_group}} mode=0755
+    #   tags: openvswitch_setup_only
+    # - name: Execute openvswitch script
+    #   shell: /tmp/autodev
+    #   sudo: yes
+    #   tags: openvswitch_setup_only
     - name: Copy go test executor script to container
       template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
       tags: test_only
+
     - name: Delete checkout dir on container if exists
       file: path={{remote_checkout_dir}} state=absent
       tags: test_only
+
     - name: Create checkout dir on container
       file: path={{remote_checkout_dir}} state=directory owner={{lxc_user}} group={{lxc_user_group}} mode=0775 recurse=yes
       tags: test_only
+
     - name: Copy existing checkout to container
       copy: src={{local_checkout_dir}} dest={{remote_checkout_dir}}
       when: use_existing_checkout
       tags: test_only
+
     - name: Clone repo on container
       shell: git clone {{mistify_agent_repo_url}} {{remote_checkout_dir}}
       when: not use_existing_checkout
       tags: test_only
+
     - name: Run go kvm tests
       shell: |
         export WORKSPACE={{lxc_user_home}}/workspace
@@ -110,4 +136,4 @@
   connection: local
   tasks:
     - name: Copy test results to localhost
-      shell: scp {{lxc_user}}@{{lxc_container_info.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
+      shell: scp {{lxc_user}}@{{lxc_container_info_started.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
