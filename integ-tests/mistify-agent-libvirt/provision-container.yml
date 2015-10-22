@@ -65,6 +65,7 @@
     - name: register new container hostname
       add_host: name="{{lxc_container_info_running.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test-firststart"
       tags: ['test_only','openvswitch_setup_only']
+  tags: provision_only
 
 # Install as root, to setup ubuntu as a sudoer
 - hosts: go-mistify-libvirt-test-firststart
@@ -75,6 +76,7 @@
     - yaegashi.blockinfile
     - { role: general-setup }
   tasks:
+  tags: provision_only
 
 
 # Install as ubuntu
@@ -96,7 +98,7 @@
       add_ssh_keys_from_github:
         usernames:
           - omniti-devops
-  tasks:
+  tags: provision_only
 
 # Restart the container after installations - mainly for openvswitch
 - hosts: localhost
@@ -120,7 +122,7 @@
       tags: ['test_only','openvswitch_setup_only']
 
     - pause: seconds=3
-  tags: secondstart
+  tags: ['secondstart', 'provision_only']
 
 - hosts: go-mistify-libvirt-test-secondstart
   remote_user: ubuntu
