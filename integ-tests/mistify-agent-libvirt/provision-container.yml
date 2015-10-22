@@ -25,7 +25,6 @@
         state: stopped
         template_options: --dist ubuntu --arch amd64 --release trusty
         config: "/tmp/{{test_container_name}}-lxc-config"
-      register: lxc_container_info
       tags: ['test_only', 'create_only', 'openvswitch_setup_only']
 
     - name: Ensure container config dir exists
@@ -38,30 +37,37 @@
       sudo: yes
       tags: openvswitch_setup_only
 
-    - name: Start container and run user and ssh setup
+    - name: Start container and wait 5 sec for the network to be available
       lxc_container:
         name: "{{test_container_name}}"
         state: started
+        container_log: true
+
+    - pause: seconds=5
+
+    - name: Configure ubuntu user and ssh setup
+      lxc_container:
+        name: "{{test_container_name}}"
         container_command: |
           mkdir -p /root/.ssh
           mkdir -p {{lxc_user_home}}/.ssh
-          chown -R {{lxc_user}}:{{lxc_user_group}} {{lxc_user_home}}/.ssh
           echo {{local_pub_key.stdout}} > /root/.ssh/authorized_keys
           echo {{local_pub_key.stdout}} > {{lxc_user_home}}/.ssh/authorized_keys
           echo StrictHostKeyChecking no > /root/.ssh/config
           echo StrictHostKeyChecking no > {{lxc_user_home}}/.ssh/config
+          chown -R {{lxc_user}}:{{lxc_user_group}} {{lxc_user_home}}/.ssh
           apt-get update
-          apt-get install -y --force-yes openssh-server apt-transport-https
-          sudo service ssh restart
+          apt-get install -y openssh-server apt-transport-https
+          service ssh restart
       tags: ['test_only', 'create_only', 'openvswitch_setup_only']
-      register: lxc_container_info_started
+      register: lxc_container_info_running
 
     - name: register new container hostname
-      add_host: name="{{lxc_container_info_started.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test"
+      add_host: name="{{lxc_container_info_running.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test-firststart"
       tags: ['test_only','openvswitch_setup_only']
 
 # Install as root, to setup ubuntu as a sudoer
-- hosts: go-mistify-libvirt-test
+- hosts: go-mistify-libvirt-test-firststart
   remote_user: root
   vars_files:
       - 'vars/vaulted_vars'
@@ -72,7 +78,7 @@
 
 
 # Install as ubuntu
-- hosts: go-mistify-libvirt-test
+- hosts: go-mistify-libvirt-test-firststart
   remote_user: ubuntu
   sudo: yes
   roles:
@@ -91,13 +97,34 @@
         usernames:
           - omniti-devops
   tasks:
-    # - name: Copy openvswitch setup script to container
-    #   template: src=templates/autodev dest=/tmp/autodev owner={{lxc_user}} group={{lxc_user_group}} mode=0755
-    #   tags: openvswitch_setup_only
-    # - name: Execute openvswitch script
-    #   shell: /tmp/autodev
-    #   sudo: yes
-    #   tags: openvswitch_setup_only
+
+# Restart the container after installations - mainly for openvswitch
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: Restart the container (stop)
+      lxc_container:
+        name: "{{test_container_name}}"
+        state: stopped
+
+    - name: Restart the container (start)
+      lxc_container:
+        name: "{{test_container_name}}"
+        state: started
+        container_log: true
+      register: lxc_container_info_restarted
+
+    - name: register new container hostname
+      add_host: name="{{lxc_container_info_restarted.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test-secondstart"
+      tags: ['test_only','openvswitch_setup_only']
+
+    - pause: seconds=3
+
+- hosts: go-mistify-libvirt-test-secondstart
+  remote_user: ubuntu
+  sudo: yes
+  roles:
+  tasks:
     - name: Copy go test executor script to container
       template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
       tags: test_only
@@ -136,4 +163,4 @@
   connection: local
   tasks:
     - name: Copy test results to localhost
-      shell: scp {{lxc_user}}@{{lxc_container_info_started.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
+      shell: scp {{lxc_user}}@{{lxc_container_info_restarted.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
