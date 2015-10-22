@@ -101,30 +101,30 @@
   tags: provision_only
 
 # Restart the container after installations - mainly for openvswitch
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: Restart the container (stop)
-      lxc_container:
-        name: "{{test_container_name}}"
-        state: stopped
+# - hosts: localhost
+#   connection: local
+#   tasks:
+#     - name: Restart the container (stop)
+#       lxc_container:
+#         name: "{{test_container_name}}"
+#         state: stopped
 
-    - name: Restart the container (start)
-      lxc_container:
-        name: "{{test_container_name}}"
-        state: started
-        container_log: true
-        container_command: sleep 3
-      register: lxc_container_info_restarted
+#     - name: Restart the container (start)
+#       lxc_container:
+#         name: "{{test_container_name}}"
+#         state: started
+#         container_log: true
+#         container_command: sleep 3
+#       register: lxc_container_info_restarted
 
-    - name: register new container hostname
-      add_host: name="{{lxc_container_info_restarted.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test-secondstart"
-      tags: ['test_only','openvswitch_setup_only']
+#     - name: register new container hostname
+#       add_host: name="{{lxc_container_info_restarted.lxc_container.ips[0]}}" groups="go-mistify-libvirt-test-secondstart"
+#       tags: ['test_only','openvswitch_setup_only']
 
-    - pause: seconds=3
-  tags: ['secondstart', 'provision_only','checkout_src']
+#     - pause: seconds=3
+#   tags: ['secondstart', 'provision_only','checkout_src']
 
-- hosts: go-mistify-libvirt-test-secondstart
+- hosts: go-mistify-libvirt-test
   remote_user: ubuntu
   sudo: yes
   roles:
@@ -167,7 +167,7 @@
   connection: local
   tasks:
     - name: Copy test results to localhost
-      shell: scp {{lxc_user}}@{{lxc_container_info_restarted.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
+      shell: scp {{lxc_user}}@{{lxc_container_info_running.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
     # - name: Destroy the container
     #   lxc_container:
     #     name: "{{test_container_name}}"
