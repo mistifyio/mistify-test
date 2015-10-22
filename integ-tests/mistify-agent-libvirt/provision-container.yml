@@ -124,7 +124,7 @@
 #     - pause: seconds=3
 #   tags: ['secondstart', 'provision_only','checkout_src']
 
-- hosts: go-mistify-libvirt-test
+- hosts: go-mistify-libvirt-test-firststart
   remote_user: ubuntu
   sudo: yes
   roles:
