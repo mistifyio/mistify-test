@@ -45,17 +45,13 @@
 
     - pause: seconds=5
 
-    - name: Configure ubuntu user and ssh setup
+    - name: Configure {{lxc_logon_user}} user and ssh setup
       lxc_container:
         name: "{{test_container_name}}"
         container_command: |
           mkdir -p /root/.ssh
-          mkdir -p {{lxc_user_home}}/.ssh
           echo {{local_pub_key.stdout}} > /root/.ssh/authorized_keys
-          echo {{local_pub_key.stdout}} > {{lxc_user_home}}/.ssh/authorized_keys
           echo StrictHostKeyChecking no > /root/.ssh/config
-          echo StrictHostKeyChecking no > {{lxc_user_home}}/.ssh/config
-          chown -R {{lxc_user}}:{{lxc_user_group}} {{lxc_user_home}}/.ssh
           apt-get update
           apt-get install -y openssh-server apt-transport-https
           service ssh restart
@@ -67,21 +63,23 @@
       tags: ['test_only','openvswitch_setup_only']
   tags: provision_only
 
-# Install as root, to setup ubuntu as a sudoer
 - hosts: go-mistify-libvirt-test-firststart
   remote_user: root
   vars_files:
       - 'vars/vaulted_vars'
   roles:
     - yaegashi.blockinfile
-    - { role: general-setup }
+    - role: general-setup
+      default_user: "{{lxc_logon_user}}"
+      default_user_group: "{{lxc_logon_user_group}}"
+      default_user_home: "{{lxc_logon_user_home}}"
   tasks:
   tags: provision_only
 
 
-# Install as ubuntu
+# Install as {{lxc_logon_user}} with sudo
 - hosts: go-mistify-libvirt-test-firststart
-  remote_user: ubuntu
+  remote_user: "{{lxc_logon_user}}"
   sudo: yes
   roles:
     - { role: kbrebanov.unzip }
@@ -125,12 +123,11 @@
 #   tags: ['secondstart', 'provision_only','checkout_src']
 
 - hosts: go-mistify-libvirt-test-firststart
-  remote_user: ubuntu
-  sudo: yes
+  remote_user: "{{lxc_logon_user}}"
   roles:
   tasks:
     - name: Copy go test executor script to container
-      template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_user}} group={{lxc_user_group}} mode=0755
+      template: src=templates/go_test_executor.py dest=/tmp/go_test_executor.py owner={{lxc_logon_user}} group={{lxc_logon_user_group}} mode=0755
       tags: ['test_only', 'checkout_src']
 
     - name: Delete checkout dir on container if exists
@@ -138,7 +135,7 @@
       tags: ['test_only', 'checkout_src']
 
     - name: Create checkout dir on container
-      file: path={{remote_checkout_dir}} state=directory owner={{lxc_user}} group={{lxc_user_group}} mode=0775 recurse=yes
+      file: path={{remote_checkout_dir}} state=directory owner={{lxc_logon_user}} group={{lxc_logon_user_group}} mode=0775 recurse=yes
       tags: ['test_only', 'checkout_src']
 
     - name: Copy existing checkout to container
@@ -153,7 +150,7 @@
 
     - name: Run go kvm tests
       shell: |
-        export WORKSPACE={{lxc_user_home}}/workspace
+        export WORKSPACE={{lxc_logon_user_home}}/workspace
         export GOPATH=$WORKSPACE
         export PATH=/usr/local/go/bin:$PATH
         export REPO={{mistify_agent_repo_name}}
@@ -167,7 +164,7 @@
   connection: local
   tasks:
     - name: Copy test results to localhost
-      shell: scp {{lxc_user}}@{{lxc_container_info_running.lxc_container.ips[0]}}:{{lxc_user_home}}/workspace/test_results.xml .
+      shell: scp {{lxc_logon_user}}@{{lxc_container_info_running.lxc_container.ips[0]}}:{{lxc_logon_user_home}}/workspace/test_results.xml .
     # - name: Destroy the container
     #   lxc_container:
     #     name: "{{test_container_name}}"
