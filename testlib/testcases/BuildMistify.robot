@@ -39,12 +39,12 @@ ${builddownloaddir}=	${mistifybuilddir}/downloads
 ...	Installing CLooG for host: done
 ...	Installing MPC for host: done
 ...	Installing binutils for host: done
-...	Installing pass-1 core C compiler: done
+...	Installing pass-1 core C gcc compiler: done
 ...	Installing kernel headers: done
 ...	Installing C library headers & start files: done
-...	Installing pass-2 core C compiler: done
+...	Installing pass-2 core C gcc compiler: done
 ...	Installing C library: done
-...	Installing final compiler: done
+...	Installing final gcc compiler: done
 ...	The go branch or tag is
 ...	Building compilers and Go bootstrap tool for host, linux/amd64
 ...	Building packages and commands for linux/amd64
