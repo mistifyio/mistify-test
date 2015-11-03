@@ -180,7 +180,7 @@ Monitor The Mistify-OS Build
     ...  in sequence. Instead, this simply loops until the buildmistify script
     ...  indicates the build has completed.
     Set Test Variable  ${_t}	1	# Iteration time.
-    Set Test Variable  ${_m}	180	# Maximum time to build even on a slow machine.
+    Set Test Variable  ${_m}	600	# Maximum time to build even on a slow machine.
     ssh.Set Client Configuration  timeout=${_t}m
     ssh.Read Until  make: Entering directory
     Log To Console  \n
@@ -195,6 +195,7 @@ Monitor The Mistify-OS Build
     	\  Exit For Loop If  '${_s}' == 'PASS'
     	\  ${_l}=  Get Lines Containing String  ${_o}  : Entering directory
     	\  Log To Console  ${_l}
+    Log Message  Build has finished.
     ssh.Read Until  ${prompt}
     ssh.Set Client Configuration  timeout=3s
 
@@ -204,7 +205,7 @@ Verify Target Directory
     ...  following a build. This changes to the target directory for the
     ...  subsequent test cases.
     ${_d}=  Set Variable  ${mistifybuilddir}/${MISTIFY_CLONE_DIR}/build/mistify/base/target
-    Log To Console  \nEntering: ${_d}
+    Log Message  \nEntering: ${_d}
     ssh.Write  cd ${_d}
     ${_o}=	ssh.Read Until  ${prompt}
     ssh.Write  pwd
