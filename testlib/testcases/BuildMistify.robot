@@ -156,6 +156,7 @@ Start The Build
     ...	--buildrootversion ${BUILDROOTVERSION}
     ...	--toolchainversion ${TOOLCHAINVERSION}
     ...	--gotag ${GOVERSION}
+    ...	--variant ${MISTIFYOSVARIANT}
     Log To Console  \nCommand is: ${_c}
     ssh.Write	${_c}
 
