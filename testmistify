@@ -24,6 +24,16 @@ Usage: $0 [options] [-- test suite options]
         This option is saved in the file:
         $testmistifystatedir/mistifyosdir
         [mistifyosdir=$mistifyosdir]
+    --mistifyosversion <version>
+        Use this version of Mistify-OS. This determines the version of Mistify-OS
+        to build or test against.
+        This option is saved in the file:
+        $testmistifystatedir/mistifyosversion
+        [mistifyosversion=$mistifyosversion]
+    --mistifyosvariant <variant>
+        Specify which variant of Mistify-OS to either build or test.
+        $testmistifystatedir/mistifyosvariant
+        [mistifyosvariant=$mistifyosvariant]
     --builddir <dir>
         The path to the directory where Mistify-OS was built (see buildmistify).
         This option is passed to the test suites on the command line in the
@@ -45,12 +55,6 @@ Usage: $0 [options] [-- test suite options]
         This option is saved in the file:
         $testmistifystatedir/downloaddir
         [downloaddir=$downloaddir]
-    --mistifyosversion <version>
-        Use this version of Mistify-OS. This determines the version of Mistify-OS
-        to build or test against.
-        This option is saved in the file:
-        $testmistifystatedir/mistifyosversion
-        [mistifyosversion=$mistifyosversion]
     --buildrootversion <version>
         The version of Buildroot to use and can be a branch, tag or a commit ID.
         This option is passed to the test suites on the command line in the
@@ -170,6 +174,8 @@ Usage: $0 [options] [-- test suite options]
     [$mistifyosdir]
     MISTIFYOSVERSION = The active Mistify-OS version as reported by git.
     [$mistifyosversion]
+    MISTIFYOSVARIANT = The variant of Mistify-OS to either build or test.
+    [$mistifyosvariant]
     BUILDROOTVERSION = The version of buildroot to pass to the test suites. This
         is used to modify test case behavior based upon the version of Buildroot.
     [$buildrootversion]
@@ -225,6 +231,7 @@ builddir:,\
 imagesdir:,\
 downloaddir:,\
 mistifyosversion:,\
+mistifyosvariant:,\
 buildrootversion:,\
 toolchainversion:,\
 goversion:,\
@@ -281,6 +288,10 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--mistifyosversion)
 	    mistifyosversion=$2
+	    shift
+	    ;;
+	--mistifyosvariant)
+	    mistifyosvariant=$2
 	    shift
 	    ;;
 	--buildrootversion)
@@ -394,6 +405,7 @@ statevars=(
     downloaddir\;$(get_build_default $buildmistifystatedir \
 		    downloaddir $PWD/downloads)
     mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
+    mistifyosvariant\;base
     buildrootversion\;$(get_build_default $buildmistifystatedir \
 		    buildrootversion master)
     toolchainversion\;$(get_build_default $buildmistifystatedir \
@@ -563,6 +575,7 @@ fi
 
 log Setting MISTIFYOSDIR to $mistifyosdir
 log Setting MISTIFYOSVERSION to $mistifyosversion
+log Setting MISTIFYOSVARIANT to $mistifyosvariant
 log Setting BUILDROOTVERSION to $buildrootversion
 log Setting TOOLCHAINVERSION to $toolchainversion
 log Setting GOVERSION to $goversion
@@ -580,7 +593,8 @@ log Setting HOME to $HOME
 pybotcommand="pybot $verboseoption -d $testlogdir \
     -v PWD:`pwd` \
     -v MISTIFYOSDIR:$mistifyosdir \
-    -v MISTIFYOSVERSION:$mistifyversion \
+    -v MISTIFYOSVERSION:$mistifyosversion \
+    -v MISTIFYOSVARIANT:$mistifyosvariant \
     -v BUILDROOTVERSION:$buildrootversion \
     -v TOOLCHAINVERSION:$toolchainversion \
     -v GOVERSION:$goversion \
