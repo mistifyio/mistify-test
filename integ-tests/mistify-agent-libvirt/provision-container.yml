@@ -90,7 +90,8 @@
       golang_per_user: false
       tags: golang
     - { role: golang-deps, tags: ['golang'] }
-    - { role: openvswitch, tags: ['openvswitch'] }
+    - role: openvswitch
+      tags: ['openvswitch']
     - { role: mistify-openvswitch-config, tags: ['openvswitch','openvswitch-config'] }
     - role: laggyluke.add-ssh-keys-from-github
       add_ssh_keys_from_github:

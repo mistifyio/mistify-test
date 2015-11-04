@@ -87,3 +87,8 @@
     content: |
       export EDITOR=vi
       source /etc/environment
+
+- name: install linux linux-headers
+  action: shell apt-get install -y linux-headers-$(uname -r)
+  ignore_errors: True
+
