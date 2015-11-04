@@ -204,14 +204,14 @@ Verify Target Directory
     ...  which contains what becomes the initrd. Verify this directory exists
     ...  following a build. This changes to the target directory for the
     ...  subsequent test cases.
-    ${_d}=  Set Variable  ${mistifybuilddir}/${MISTIFY_CLONE_DIR}/build/mistify/base/target
+    ${_d}=  Set Variable  ${mistifybuilddir}/${MISTIFY_CLONE_DIR}/build/mistify/${MISTIFYOSVARIANT}/target
     Log Message  \nEntering: ${_d}
     ssh.Write  cd ${_d}
     ${_o}=	ssh.Read Until  ${prompt}
     ssh.Write  pwd
     ${_o}=	ssh.Read Until  ${prompt}
     Log To Console  \n${_o}
-    Should Contain  ${_o}  /build/mistify/base/target
+    Should Contain  ${_o}  /build/mistify/${MISTIFYOSVARIANT}/target
 
 Verify The bin Files
     [Documentation]  Verify files exist in the target/bin directory.
