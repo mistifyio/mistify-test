@@ -397,15 +397,16 @@ set_test_default mistifyosdir $mistifyosdir
 
 buildmistifystatedir=$mistifyosdir/.buildmistify
 
+init_test_variable mistifyosvariant\;base
+
 statevars=(
+    mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
     builddir\;$(get_build_default $buildmistifystatedir \
-		    variantbuilddir $mistifyosdir/build/mistify/base)
+		    variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)
     imagesdir\;$(get_build_default $buildmistifystatedir \
-		    variantbuilddir $mistifyosdir/build/mistify/base)/images
+		    variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)/images
     downloaddir\;$(get_build_default $buildmistifystatedir \
 		    downloaddir $PWD/downloads)
-    mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
-    mistifyosvariant\;base
     buildrootversion\;$(get_build_default $buildmistifystatedir \
 		    buildrootversion master)
     toolchainversion\;$(get_build_default $buildmistifystatedir \
@@ -426,9 +427,6 @@ statevars=(
 )
 for v in "${statevars[@]}"
 do
-    if [ ! -z "$resetdefaults" ]; then
-	clear_test_variable $v
-    fi
     init_test_variable $v
 done
 

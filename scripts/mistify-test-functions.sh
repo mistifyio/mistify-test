@@ -64,10 +64,28 @@ function get_build_default() {
     echo $r
 }
 
+function clear_test_variable() {
+    # Parameters:
+    #	1: variable name and default value pair delimited by the delimeter (2)
+    #   2: an optional delimeter character (defaults to ';')
+    if [ -z "$2" ]; then
+      d=';'
+    else
+      d=$2
+    fi
+    e=(`echo $1 | tr $d " "`)
+    verbose ""
+    verbose Clearing state variable: ${e[0]}
+    reset_test_default ${e[0]}
+}
+
 function init_test_variable() {
     # Parameters:
     #	1: variable name and default value pair delimited by the delimeter (2)
     #   2: an optional delimeter character (defaults to ';')
+    if [ ! -z "$resetdefaults" ]; then
+	clear_test_variable $v
+    fi
     if [ -z "$2" ]; then
       d=';'
     else
@@ -85,21 +103,6 @@ function init_test_variable() {
     verbose "State variable: ${e[0]} = $val"
     verbose Saving current settings.
     set_test_default ${e[0]} $val
-}
-
-function clear_test_variable() {
-    # Parameters:
-    #	1: variable name and default value pair delimited by the delimeter (2)
-    #   2: an optional delimeter character (defaults to ';')
-    if [ -z "$2" ]; then
-      d=';'
-    else
-      d=$2
-    fi
-    e=(`echo $1 | tr $d " "`)
-    verbose ""
-    verbose Clearing state variable: ${e[0]}
-    reset_test_default ${e[0]}
 }
 
 function get_mistifyos_version() {
