@@ -70,10 +70,7 @@ Setup Tools In All SDK Instances
       \  Log Message  \nSSH to node: ${_n}
       \  SSH As User To Node  ${USER}  ${_n}
       \  Create Needed Directories  ${USER}
-      \  Install unzip
-      \  Install autotools Package  texinfo  4.13  _flags=LDFLAGS=" -L/usr/lib -lncurses"
-      \  Install autotools Package  ccache  3.2.3  _url=http://samba.org/ftp
-      \  Install Mercurial
+      \  SSH Run  sudo fixpython
       \  Install Python PIP
       \  Install Robot Framework
       \  Authenticate With Github
@@ -82,6 +79,7 @@ Setup Tools In All SDK Instances
       \  SSH Run  exit
 
 *** Keywords ***
+
 Create Needed Directories
     [Documentation]  This creates some directories which are needed later.
     ...  These are the directories for the mistify relelated clones, where
@@ -97,59 +95,6 @@ Create Needed Directories
     SSH Run  mkdir ${MISTIFY_SDK_ROOT}/downloads
     SSH Run  mkdir ${MISTIFY_SDK_ROOT}/projects
     SSH Run  mkdir ${MISTIFY_SDK_ROOT}/tmp
-
-Install autotools Package
-    [Documentation]  This installs a GNU package using autoconf.
-    [Arguments]  ${_package}  ${_version}
-    ...  ${_install}=install
-    ...  ${_url}=http://ftp.gnu.org/gnu
-    ...  ${_flags}=${SPACE}
-    Log Message  \nInstalling ${_package}-${_version}
-    ssh.Set Client Configuration  timeout=5m
-    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
-    ${_i}=  SSH Run And Get Return Code
-    ...  wget ${_url}/${_package}/${_package}-${_version}.tar.gz
-    ...  _delay=10s
-    Should Be Equal As Integers  ${_i}  ${0}
-    SSH Run  tar xzf ${_package}-${_version}.tar.gz
-    SSH Run  cd ${_package}-${_version}
-    SSH Run  ${_flags} ./configure --prefix=/usr && make && sudo make ${_install}  _delay=15s
-    ssh.Set Client Configuration  timeout=3s
-
-Install unzip
-    [Documentation]  The busybox version of unzip works in most cases but
-    ...  doesn't always. So build natively.
-    Log Message  \nInstalling unzip.
-    ssh.Set Client Configuration  timeout=5m
-    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
-    ${_i}=  SSH Run And Get Return Code
-    ...  wget http://downloads.sourceforge.net/infozip/unzip60.tar.gz
-    ...  _delay=10s
-    Should Be Equal As Integers  ${_i}  ${0}
-    SSH Run  tar xzf unzip60.tar.gz
-    SSH Run  cd unzip60
-    SSH Run  make CC=gcc -f unix/Makefile generic  _delay=15s
-    SSH Run  sudo make prefix=/usr MANDIR=/usr/share/man/man1 -f unix/Makefile install
-    ...  _delay=15s
-    ssh.Set Client Configuration  timeout=3s
-
-Install Mercurial
-    [Documentation]  Some buildroot packages use hg to clone the source.
-    ...  Mercurial provides this but because of the embedded paths.
-    ...  in python can't be installed using pip. So get the source and
-    ...  compile locally.
-    [Arguments]  ${_version}=3.5.2
-    Log Message  \nInstalling Mercurial.
-    ssh.Set Client Configuration  timeout=5m
-    SSH Run  cd ${MISTIFY_SDK_ROOT}/tmp
-    ${_i}=  SSH Run And Get Return Code
-    ...  wget https://www.mercurial-scm.org/release/mercurial-${_version}.tar.gz
-    ...  _delay=10s
-    Should Be Equal As Integers  ${_i}  ${0}
-    SSH Run  tar xzf mercurial-${_version}.tar.gz
-    SSH Run  cd mercurial-${_version}
-    SSH Run  sudo make install  _delay=15s
-    ssh.Set Client Configuration  timeout=3s
 
 Install Python PIP
     [Documentation]  PIP is used to install Python packages.
