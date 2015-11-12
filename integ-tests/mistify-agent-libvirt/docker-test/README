@@ -1,0 +1,20 @@
+I punted on non-kernel ovs and so openvswitch module needs to be
+enabled/inserted into host kernel. Works fine with multiple containers with same
+bridge name. I think user mode ovs should also work but it gave me errors and I
+have not looked into again.
+
+Host also needs to have kvm module inserted and /dev/kvm node must be owned by kvm
+group. I think ubuntu does this anyway. Actual group does not matter but w/e it
+is in host must also be passed into container.
+
+docker run -ti --name=ovsc --cap-add NET_ADMIN --group-add=kvm --device=/dev/kvm --device=/dev/net/tun --rm ovs
+
+^ can also be run with `-d` for detached mode. Once container is up, need to
+enter with `docker exec`. `/net.sh` will setup ovs mistify0 bridge. `./node0.sh`
+will setup a kvm vm. I don't think `node0.sh` is necessary but can be useful for
+your testing purposes. Also should probably not specify a name, or if so a
+unique name...
+
+I ran all of this without the uid/gid map, you may need to experiment a little
+with that. Arch doesn't enable that just yet but I think setting up docker call
+with the uid/gid args and passing `--group-add=kvm` should work.
