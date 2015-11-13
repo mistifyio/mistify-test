@@ -1,4 +1,0 @@
-#!/bin/sh
-
-ovsdb-tool create
-exec ovsdb-server --remote=punix:/var/run/openvswitch/db.sock
