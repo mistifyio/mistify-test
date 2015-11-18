@@ -22,6 +22,9 @@ RUN cd /tmp/openvswitch-2.4.0 && \
 	bash -c "dpkg -i /tmp/openvswitch-{common,pki,switch}*.deb"
 RUN mkdir -p /var/run/openvswitch/
 
+COPY ovsdb-server.run /etc/service/ovsdb-server/run
+COPY ovs-vswitchd.run /etc/service/ovs-vswitchd/run
+COPY libvirtd.run /etc/service/libvirtd/run
 COPY ifup ifdown net.sh /
 
 ENV GOLANG_VERSION 1.4.2
