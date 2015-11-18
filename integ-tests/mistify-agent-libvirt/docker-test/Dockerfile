@@ -27,6 +27,8 @@ COPY ovs-vswitchd.run /etc/service/ovs-vswitchd/run
 COPY libvirtd.run /etc/service/libvirtd/run
 COPY add-mistify-bridge.sh /
 
+RUN service openvswitch-switch start
+
 ENV GOLANG_VERSION 1.4.2
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
 ENV GOLANG_DOWNLOAD_SHA1 5020af94b52b65cc9b6f11d50a67e4bae07b0aff
