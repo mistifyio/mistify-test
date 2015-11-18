@@ -25,7 +25,7 @@ RUN mkdir -p /var/run/openvswitch/
 COPY ovsdb-server.run /etc/service/ovsdb-server/run
 COPY ovs-vswitchd.run /etc/service/ovs-vswitchd/run
 COPY libvirtd.run /etc/service/libvirtd/run
-COPY ifup ifdown net.sh /
+COPY add-mistify-bridge.sh /
 
 ENV GOLANG_VERSION 1.4.2
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
@@ -41,6 +41,11 @@ ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p "$GOPATH/src/github.com/mistifyio/" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 WORKDIR $GOPATH
+
+RUN cd $GOPATH && go get github.com/kisielk/errcheck
+RUN cd $GOPATH && go get github.com/jstemmer/go-junit-report
+RUN cd $GOPATH && go get golang.org/x/tools/cmd/goimports
+RUN cd $GOPATH && go get github.com/golang/lint/golint
 
 RUN apt-get remove -y  $buildDeps && \
 	apt-get clean -y && \
