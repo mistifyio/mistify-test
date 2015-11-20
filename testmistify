@@ -1,7 +1,7 @@
 #!/bin/bash
 #+
 # Use this script to run verification tests against Mistify-OS.
-#
+#s
 #-
 
 source scripts/mistify-test-functions.sh
@@ -184,7 +184,7 @@ Usage: $0 [options] [-- test suite options]
         toolchain used to build Mistify-OS.
     [$toolchainversion]
     GOVERSION = The version of Go to build. This is used to modify test case
-	behavior based upon the version of Go.
+    behavior based upon the version of Go.
     [$goversion]
     BUILDDIR = The directory in which Mistify-OS was built. Test cases can use
         this to test against different builds of the Mistify-OS.
@@ -221,7 +221,7 @@ Usage: $0 [options] [-- test suite options]
   $testmistifystatedir.
 EOF
 }
-
+#' This is to close all single quotes for syntax highlighting.
 #+
 # Handle the command line options.
 #-
@@ -264,120 +264,120 @@ eval set -- $a
 
 while [ $# -ge 1 ]; do
     case "$1" in
-	--)
-	    shift
-	    verbose Passing additional options to pybot: $@
-	    break
-	    ;;
-	--mistifyosdir)
-	    mistifyosdir=$2
-	    shift
-	    ;;
-	--builddir)
-	    builddir=$2
-	    imagesdir=$builddir/images
-	    shift
-	    ;;
-	--imagesdir)
-	    imagesdir=$2
-	    shift
-	    ;;
-	--downloaddir)
-	    downloaddir=$2
-	    shift
-	    ;;
-	--mistifyosversion)
-	    mistifyosversion=$2
-	    shift
-	    ;;
-	--mistifyosvariant)
-	    mistifyosvariant=$2
-	    shift
-	    ;;
-	--buildrootversion)
-	    buildrootversion=$2
-	    shift
-	    ;;
-	--toolchainversion)
-	    toolchainversion=$2
-	    shift
-	    ;;
-	--goversion)
-	    goversion=$2
-	    shift
-	    ;;
-	--testlibdir)
-	    testlibdir=$2
-	    shift
-	    ;;
-	--testbeddir)
-	    testbeddir=$2
-	    shift
-	    ;;
-	--testbed)
-	    testbed=$2
-	    shift
-	    ;;
-	--testdistrodir)
-	    testdistrodir=$2
-	    shift
-	    ;;
-	--testdistro)
-	    testdistro=$2
-	    shift
-	    ;;
-	--containerid)
-	    containerid=$2
-	    shift
-	    ;;
-	--testsuite)
-	    testsuite=$2
-	    shift
-	    ;;
-	--testsuitedir)
-	    testsuitedir=$2
-	    shift
-	    ;;
-	--testcase)
-	    testcase=$2
-	    shift
-	    ;;
-	--setup)
-	    setup=$2
-	    shift
-	    ;;
-	--exitonfailure)
-	    exitonfailure=y
-	    ;;
-	--testtag)
-	    testtag=$2
-	    shift
-	    ;;
-	--testlogdir)
-	    testlogdir=$2
-	    shift
-	    ;;
-	--resetdefaults)
-	    resetdefaults=y
-	    ;;
-	--verbose)
-	    verbose=y
-	    ;;
-	--dryrun)
-	    dryrun=echo
-	    ;;
-	--alwaysok)
-	    alwaysok=y
-	    ;;
-	-h|--help)
-	    showusage=y
-	    ;;
-	# using getopt should avoid needing this catchall but just in case...
-	*)
-	    error "Invalid option: $1"
-	    showusage=y
-	    errorexit=y
-	    ;;
+    --)
+        shift
+        verbose Passing additional options to pybot: $@
+        break
+        ;;
+    --mistifyosdir)
+        mistifyosdir=$2
+        shift
+        ;;
+    --builddir)
+        builddir=$2
+        imagesdir=$builddir/images
+        shift
+        ;;
+    --imagesdir)
+        imagesdir=$2
+        shift
+        ;;
+    --downloaddir)
+        downloaddir=$2
+        shift
+        ;;
+    --mistifyosversion)
+        mistifyosversion=$2
+        shift
+        ;;
+    --mistifyosvariant)
+        mistifyosvariant=$2
+        shift
+        ;;
+    --buildrootversion)
+        buildrootversion=$2
+        shift
+        ;;
+    --toolchainversion)
+        toolchainversion=$2
+        shift
+        ;;
+    --goversion)
+        goversion=$2
+        shift
+        ;;
+    --testlibdir)
+        testlibdir=$2
+        shift
+        ;;
+    --testbeddir)
+        testbeddir=$2
+        shift
+        ;;
+    --testbed)
+        testbed=$2
+        shift
+        ;;
+    --testdistrodir)
+        testdistrodir=$2
+        shift
+        ;;
+    --testdistro)
+        testdistro=$2
+        shift
+        ;;
+    --containerid)
+        containerid=$2
+        shift
+        ;;
+    --testsuite)
+        testsuite=$2
+        shift
+        ;;
+    --testsuitedir)
+        testsuitedir=$2
+        shift
+        ;;
+    --testcase)
+        testcase=$2
+        shift
+        ;;
+    --setup)
+        setup=$2
+        shift
+        ;;
+    --exitonfailure)
+        exitonfailure=y
+        ;;
+    --testtag)
+        testtag=$2
+        shift
+        ;;
+    --testlogdir)
+        testlogdir=$2
+        shift
+        ;;
+    --resetdefaults)
+        resetdefaults=y
+        ;;
+    --verbose)
+        verbose=y
+        ;;
+    --dryrun)
+        dryrun=echo
+        ;;
+    --alwaysok)
+        alwaysok=y
+        ;;
+    -h|--help)
+        showusage=y
+        ;;
+    # using getopt should avoid needing this catchall but just in case...
+    *)
+        error "Invalid option: $1"
+        showusage=y
+        errorexit=y
+        ;;
     esac
     shift
 done
@@ -402,17 +402,17 @@ init_test_variable mistifyosvariant\;base
 statevars=(
     mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
     builddir\;$(get_build_default $buildmistifystatedir \
-		    variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)
+            variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)
     imagesdir\;$(get_build_default $buildmistifystatedir \
-		    variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)/images
+            variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)/images
     downloaddir\;$(get_build_default $buildmistifystatedir \
-		    downloaddir $PWD/downloads)
+            downloaddir $PWD/downloads)
     buildrootversion\;$(get_build_default $buildmistifystatedir \
-		    buildrootversion master)
+            buildrootversion master)
     toolchainversion\;$(get_build_default $buildmistifystatedir \
-		    toolchainversion crosstool-ng-1.21.0)
+            toolchainversion crosstool-ng-1.21.0)
     goversion\;$(get_build_default $buildmistifystatedir \
-		    gotag master)
+            gotag master)
     testlibdir\;testlib
     testbeddir\;testlib/testbeds
     testbed\;labrat.robot
@@ -453,7 +453,7 @@ fi
 if [ ! -z "$showusage" ]; then
     usage
     if [ ! -z "$errorexit" ]; then
-      exit 1
+        exit 1
     fi
     exit 0
 fi
@@ -564,11 +564,11 @@ if [[ "$verbose" == "y" ]]; then
 fi
 
 if [ -n "$testtag" ]; then
-  pybotoptions+=" --include $testtag"
+    pybotoptions+=" --include $testtag"
 fi
 
 if [ -n "$exitonfailure" ]; then
-  pybotoptions+=" --exitonfailure"
+    pybotoptions+=" --exitonfailure"
 fi
 
 log Setting MISTIFYOSDIR to $mistifyosdir

@@ -2,7 +2,7 @@
 # Some standard functions for Mistify-OS scripts.
 #-
 cmdline="$0 $*"
-projectdir=$PWD	# Save this directory for later.
+projectdir=$PWD    # Save this directory for later.
 
 testmistifystatedir=$projectdir/.testmistify
 if [ ! -e $testmistifystatedir ]; then
@@ -14,7 +14,7 @@ if [ -e .git ]; then
     mistifytestbranchdefault=`git symbolic-ref -q --short HEAD`
     # Jenkins detaches for branches so need to use a commit ID instead.
     if [ -z "$mistifytestbranchdefault" ]; then
-	mistifytestbranchdefault=`git rev-parse HEAD`
+        mistifytestbranchdefault=`git rev-parse HEAD`
     fi
 fi
 
@@ -23,9 +23,9 @@ function get_test_default() {
     #   1: option name
     #   2: default value
     if [ -e $testmistifystatedir/$1 ]; then
-      r=`cat $testmistifystatedir/$1`
+        r=`cat $testmistifystatedir/$1`
     else
-      r=$2
+        r=$2
     fi
     verbose The test default for $1 is $2
     echo $r
@@ -43,10 +43,10 @@ function reset_test_default() {
     # Parameters:
     #   1: option name
     if [ -e $testmistifystatedir/$1 ]; then
-      rm $testmistifystatedir/$1
-      verbose Option $1 test default has been reset.
+        rm $testmistifystatedir/$1
+        verbose Option $1 test default has been reset.
     else
-      verbose Option $1 test default has not been set.
+        verbose Option $1 test default has not been set.
     fi
 }
 
@@ -56,9 +56,9 @@ function get_build_default() {
     #   2: option name
     #   3: default value
     if [ -e $1/$2 ]; then
-      r=`cat $1/$2`
+        r=`cat $1/$2`
     else
-      r=$3
+        r=$3
     fi
     verbose The default for $2 is $3
     echo $r
@@ -66,12 +66,12 @@ function get_build_default() {
 
 function clear_test_variable() {
     # Parameters:
-    #	1: variable name and default value pair delimited by the delimeter (2)
+    #   1: variable name and default value pair delimited by the delimeter (2)
     #   2: an optional delimeter character (defaults to ';')
     if [ -z "$2" ]; then
-      d=';'
+        d=';'
     else
-      d=$2
+        d=$2
     fi
     e=(`echo $1 | tr $d " "`)
     verbose ""
@@ -81,23 +81,23 @@ function clear_test_variable() {
 
 function init_test_variable() {
     # Parameters:
-    #	1: variable name and default value pair delimited by the delimeter (2)
+    #   1: variable name and default value pair delimited by the delimeter (2)
     #   2: an optional delimeter character (defaults to ';')
     if [ ! -z "$resetdefaults" ]; then
-	clear_test_variable $v
+        clear_test_variable $v
     fi
     if [ -z "$2" ]; then
-      d=';'
+        d=';'
     else
-      d=$2
+        d=$2
     fi
     e=(`echo $1 | tr $d " "`)
     verbose ""
     verbose State variable default: "${e[0]} = ${e[1]}"
     eval val=\$${e[0]}
     if [ -z "$val" ]; then
-	verbose Setting ${e[0]} to default: ${e[1]}
-	eval ${e[0]}=$(get_test_default ${e[0]} ${e[1]})
+        verbose Setting ${e[0]} to default: ${e[1]}
+        eval ${e[0]}=$(get_test_default ${e[0]} ${e[1]})
     fi
     eval val=\$${e[0]}
     verbose "State variable: ${e[0]} = $val"
@@ -109,16 +109,16 @@ function get_mistifyos_version() {
     # Parameters:
     #    1: mistifyosdir - Where the mistify-os repo clone is located.
     if [ -d $1 ]; then
-	pushd $1 >/dev/null
-	# Which branch of the mistify-os is being checked.
-	r=`git symbolic-ref -q --short HEAD`
-	# Jenkins detaches for branches so need to use a commit ID instead.
-	if [ -z "$r" ]; then
-	    r=`git rev-parse HEAD`
-	fi
-	popd >/dev/null
+        pushd $1 >/dev/null
+        # Which branch of the mistify-os is being checked.
+        r=`git symbolic-ref -q --short HEAD`
+        # Jenkins detaches for branches so need to use a commit ID instead.
+        if [ -z "$r" ]; then
+            r=`git rev-parse HEAD`
+        fi
+        popd >/dev/null
     else
-	r=master
+        r=master
     fi
     echo $r
 }
@@ -152,7 +152,7 @@ error () {
 
 verbose () {
     if [[ "$verbose" == "y" ]]; then
-	echo >&2 -e "$lightblue$id$nc: $*"
+        echo >&2 -e "$lightblue$id$nc: $*"
     fi
 }
 
@@ -181,12 +181,12 @@ function run_ignore {
 function confirm () {
     read -r -p "${1:-Are you sure? [y/N]} " response
     case $response in
-	[yY][eE][sS]|[yY])
-	    true
-	    ;;
-	*)
-	    false
-	    ;;
+    [yY][eE][sS]|[yY])
+        true
+        ;;
+    *)
+        false
+        ;;
     esac
 }
 
@@ -194,4 +194,3 @@ is_mounted () {
     mount | grep $1
     return $?
 }
-
