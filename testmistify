@@ -400,30 +400,30 @@ buildmistifystatedir=$mistifyosdir/.buildmistify
 init_test_variable mistifyosvariant\;base
 
 statevars=(
-    mistifyosversion\;$(get_mistifyos_version $mistifyosdir)
-    builddir\;$(get_build_default $buildmistifystatedir \
+    mistifyosversion=$(get_mistifyos_version $mistifyosdir)
+    builddir=$(get_build_default $buildmistifystatedir \
             variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)
-    imagesdir\;$(get_build_default $buildmistifystatedir \
+    imagesdir=$(get_build_default $buildmistifystatedir \
             variantbuilddir $mistifyosdir/build/mistify/$mistifyosvariant)/images
-    downloaddir\;$(get_build_default $buildmistifystatedir \
+    downloaddir=$(get_build_default $buildmistifystatedir \
             downloaddir $PWD/downloads)
-    buildrootversion\;$(get_build_default $buildmistifystatedir \
+    buildrootversion=$(get_build_default $buildmistifystatedir \
             buildrootversion master)
-    toolchainversion\;$(get_build_default $buildmistifystatedir \
+    toolchainversion=$(get_build_default $buildmistifystatedir \
             toolchainversion crosstool-ng-1.21.0)
-    goversion\;$(get_build_default $buildmistifystatedir \
+    goversion=$(get_build_default $buildmistifystatedir \
             gotag master)
-    testlibdir\;testlib
-    testbeddir\;testlib/testbeds
-    testbed\;labrat.robot
-    testdistrodir\;testlib/distros
-    testdistro\;ubuntu-trusty-amd64.robot
-    containerid\;-test
-    testsuitedir\;testlib/testsuites
-    testsuite\;defaulttests
-    setup\;none
-    testlogdir\;testlogs
-    testlog\;testmistify.log
+    testlibdir=testlib
+    testbeddir=testlib/testbeds
+    testbed=labrat.robot
+    testdistrodir=testlib/distros
+    testdistro=ubuntu-trusty-amd64.robot
+    containerid=-test
+    testsuitedir=testlib/testsuites
+    testsuite=defaulttests
+    setup=none
+    testlogdir=testlogs
+    testlog=testmistify.log
 )
 for v in "${statevars[@]}"
 do
