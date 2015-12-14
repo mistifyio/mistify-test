@@ -67,13 +67,13 @@ function get_build_default() {
 function clear_test_variable() {
     # Parameters:
     #   1: variable name and default value pair delimited by the delimeter (2)
-    #   2: an optional delimeter character (defaults to ';')
+    #   2: an optional delimeter character (defaults to '=')
     if [ -z "$2" ]; then
-        d=';'
+        d='='
     else
         d=$2
     fi
-    e=(`echo $1 | tr $d " "`)
+    e=(`echo "$1" | tr "$d" " "`)
     verbose ""
     verbose Clearing state variable: ${e[0]}
     reset_test_default ${e[0]}
@@ -82,16 +82,16 @@ function clear_test_variable() {
 function init_test_variable() {
     # Parameters:
     #   1: variable name and default value pair delimited by the delimeter (2)
-    #   2: an optional delimeter character (defaults to ';')
+    #   2: an optional delimeter character (defaults to '=')
     if [ ! -z "$resetdefaults" ]; then
         clear_test_variable $v
     fi
     if [ -z "$2" ]; then
-        d=';'
+        d='='
     else
         d=$2
     fi
-    e=(`echo $1 | tr $d " "`)
+    e=(`echo "$1" | tr "$d" " "`)
     verbose ""
     verbose State variable default: "${e[0]} = ${e[1]}"
     eval val=\$${e[0]}
