@@ -1,0 +1,10 @@
+---
+- name: Install python packages for thirdparty modules
+  apt: pkg={{item}} state=present
+  with_items:
+    - python-dev
+    - lxc-dev
+
+- name: Install lxcpython
+  pip:
+    name: lxc-python2

@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Ferzan Rizvi
+  description: Role for installing golang dependencies
+  company: OmniTi
+  license:
+  min_ansible_version: 1.2
+  platforms:
+  - name: Ubuntu
+    versions:
+     - trusty
+  categories:
+    - system
+dependencies: []

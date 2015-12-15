@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Ferzan Rizvi
+  description: Role for general setup
+  company: OmniTi
+  license:
+  min_ansible_version: 1.2
+  platforms:
+  - name: Ubuntu
+    versions:
+     - trusty
+  categories:
+    - packaging
+    - system
+dependencies: []

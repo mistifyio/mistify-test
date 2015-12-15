@@ -1,0 +1,6 @@
+---
+- name: Install required dependencies for mistify
+  action: apt pkg={{item}} state=present
+  with_items:
+    - libvirt-bin
+    - libvirt-dev

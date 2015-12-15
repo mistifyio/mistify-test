@@ -1,0 +1,57 @@
+---
+- name: Install common packages
+  action: apt pkg={{item}} state=present
+  with_items:
+    - wget
+    - git
+    - curl
+    - python-httplib2
+    - apt-file
+    - software-properties-common
+    - qemu-kvm
+
+- name: Add ansible apt repository
+  apt_repository: repo='ppa:ansible/ansible' state=present update_cache=yes
+
+- name: Install ansible on slave
+  action: apt pkg=ansible state=present
+
+- name: Add default sudoers file
+  template:
+    src: sudoers.j2
+    dest: /etc/sudoers
+    owner: root
+    group: root
+    mode: 0440
+
+- name: Ensure /etc/sudoers.d exists
+  file:
+    path: /etc/sudoers.d
+    owner: root
+    group: root
+    mode: 0770
+    state: directory
+
+- name: Copy ubuntu sudoers file
+  template:
+    src: ubuntu_sudoers.j2
+    dest: /etc/sudoers.d/ubuntu_sudoers
+    owner: root
+    group: root
+    mode: 0440
+
+- name: Setup git config
+  template:
+    src: gitconfig.j2
+    dest: "{{default_user_home}}/.gitconfig"
+    owner: "{{default_user}}"
+    group: "{{default_group}}"
+  tags: git
+
+- name: Edit bash.rc
+  blockinfile:
+    dest: "{{default_user_home}}/.bashrc"
+    insertafter: EOF
+    content: |
+      export EDITOR=vi
+      source /etc/environment

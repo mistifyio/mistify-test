@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Ferzan Rizvi
+  description: Role for installing python modules we require for mistify testing or builds
+  company: OmniTi
+  license:
+  min_ansible_version: 1.2
+  platforms:
+  - name: Ubuntu
+    versions:
+     - trusty
+  categories:
+    - system
+dependencies: []

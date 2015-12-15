@@ -1,0 +1,5 @@
+lxc.include = {{ lookup('env', 'HOME') }}/.config/lxc/default.conf
+lxc.hook.autodev=/var/lib/lxc/{{test_container_name}}/autodev
+lxc.mount.entry = /dev/net dev/net none bind,create=dir
+# /dev/net/tun
+lxc.cgroup.devices.allow = c 10:200 rwm
