@@ -5,7 +5,7 @@ Documentation	This test runs the test-api.sh script and verifies some of its out
 # NOTE: The variable TESTLIBDIR is passed from the command line by the testmistify
 # script. There is no default value for this variable.
 #-
-Resource	${TESTLIBDIR}/resources/mistify.robot
+Resource	${TESTLIBDIR}/config/mistify.robot
 Library		OperatingSystem
 
 *** Variables ***

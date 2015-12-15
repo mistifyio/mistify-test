@@ -22,7 +22,7 @@ Library		Collections
 # NOTE: The variable TESTLIBDIR is passed from the command line by the testmistify
 # script. There is no default value for this variable.
 #-
-Resource	${TESTLIBDIR}/resources/mistify.robot
+Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 
@@ -39,7 +39,8 @@ Select Test Node
     Use Node  @{MISTIFY_CLUSTER_NODES}[0]
 
 Verify Systemd Is Functional
-    [Documentation]	Verify systemctl can be used to check service states.
+    [Documentation]	Verify systemctl can be used to check service states and.
+    ...  systemd is in a running state (not degraded or failed).
     ${_l}=  SSH Run And Get First Line  systemctl --no-pager is-system-running
     Should Contain  ${_l}  running
 

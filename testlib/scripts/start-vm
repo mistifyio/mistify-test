@@ -88,6 +88,18 @@ Usage: $0 [options]
         This option is saved in the file:
         $testmistifystatedir/pxeoptionrom
         [pxeoptionrom = $pxeoptionrom]
+    --rammb <megabytes>
+        The amount of RAM to allocate to the virtual machine (in megabytes).
+        This option is saved in the file:
+        $testmistifystatedir/rammb
+        [rammb = $rammb]
+    --ramdisksize <kilobytes>
+        The amount of RAM to allocate to the ram disk (in kilobytes).
+        NOTE: If this is not sufficient for the actual RAM disk the kernel will
+        default to half of avialable RAM.
+        This option is saved in the file:
+        $testmistifystatedir/ramdisksize
+        [ramdisksize = $ramdisksize]
     ==== Other ====
     --resetdefaults
         Reset options back to their default values.
@@ -114,6 +126,8 @@ tap:,\
 mac:,\
 pxeoptionrom:,\
 netboot,\
+rammb,\
+ramdisksize:,\
 resetdefaults,\
 verbose,\
 dryrun,\
@@ -172,6 +186,14 @@ while [ $# -ge 1 ]; do
 	--netboot)
 	    netboot=y
 	    ;;
+	--rammb)
+	    rammb=$2
+	    shift
+	    ;;
+	--ramdisksize)
+	    ramdisksize=$2
+	    shift
+	    ;;
 	--resetdefaults)
 	    resetdefaults=y
 	    ;;
@@ -205,6 +227,8 @@ statevars=(
     mac\;DE:AD:BE:EF:`printf "%02X:%02X" $(( (RANDOM % 256) )) $(( (RANDOM % 256) ))`
     pxeoptionrom\;/usr/share/qemu/pxe-virtio.rom
     netboot\;''
+    rammb\;2048
+    ramdisksize\;200000
 )
 for v in "${statevars[@]}"
 do
@@ -296,7 +320,7 @@ $netbootoptions \
 -machine accel=kvm -cpu host -smp 2 \
 -uuid $uuid \
 -global isa-fdc.driveA= \
--append 'noapic acpi=off ramdisk_size=200000 rw console=ttyS0 zfs=auto' \
--nographic -m 2048 \
+-append "noapic acpi=off ramdisk_size=$ramdisksize rw console=ttyS0 zfs=auto" \
+-nographic -m $rammb \
 -device e1000,netdev=net0,mac=$mac \
 -netdev tap,ifname=$tap,id=net0,script=no

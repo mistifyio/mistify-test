@@ -15,6 +15,33 @@ Library	Collections
 *** Variables ***
 
 *** Keywords ***
+Collect SDK Attributes
+    [Documentation]	This collects the attributes of each of the running
+    ...			nodes and makes them available in a global collection.
+    ...
+    ...  NOTE: This requires different screen sessions for each of the nodes and
+    ...  each session is named after the node.
+    ...
+    ...  This creates a collection of collections. The top collection is used
+    ...  to access the individual node attributes and is keyed by node name.
+    ${Nodes}=	Create Dictionary  node  dictionary
+    :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
+      \  Attach Screen  ${_n}
+      \  Log To Console  \nCollecting attributes for node: ${_n}
+      \  ${_if}=  Learn Test Interface
+      \  Log To Console  \nNode ${_n} interface: ${_if}
+      \  ${_ip}=  Learn IP Address  ${_if}
+      \  Log To Console  \nNode ${_n} IP address: ${_ip}
+      \  ${_mac}=  Learn MAC Address  ${_if}
+      \  Log To Console  \nNode ${_n} MAC address: ${_mac}
+      \  ${_uuid}=  Learn UUID
+      \  Log To Console  \nNode ${_n} UUID: ${_uuid}
+      \  ${_a}=  Create Dictionary  uuid  ${_uuid}  if  ${_if}  ip  ${_ip}  mac  ${_mac}
+      \  Set To Dictionary  ${Nodes}  ${_n}  ${_a}
+      \  Detach Screen
+    Log Dictionary  ${Nodes}
+    Set Global Variable  ${Nodes}
+
 Collect Attributes
     [Documentation]	This collects the attributes of each of the running
     ...			nodes and makes them available in a global collection.
@@ -61,6 +88,7 @@ Get Node UUID
 SSH To Node
     [Documentation]	This logs into a node using ssh.
     ...
+    ...	NOTE: This uses the configured mistify user (typically root).
     ...	NOTE: This uses the running ssh session to run ssh to login to the
     ...	node and therefore does not require switching ssh sessions.
     [Arguments]	${_node}
@@ -81,6 +109,7 @@ Logout From Node
 
 Copy File To Node
     [Documentation]  Copy a file to a node using scp.
+    ...	NOTE: This uses the configured mistify user (typically root).
     [Arguments]  ${_node}  ${_source}  ${_destination}
     ${_ip}=  Get Node IP Address  ${_node}
     ${_c}=  catenate
@@ -96,6 +125,7 @@ Copy File To Node
 Run Command On Node
     [Documentation]	This uses ssh to run a command on the node and then
     ...			return the output.
+    ...	NOTE: This uses the configured mistify user (typically root).
     [Arguments]	${_node}  ${_command}
     ${_ip}=  Get Node IP Address  ${_node}
     ${_c}=  catenate
@@ -108,12 +138,75 @@ Run Command On Node
     Should Not Contain  ${_o}  Permission denied
     [Return]  ${_o}
 
+SSH As User To Node
+    [Documentation]	This logs into a node as a non-mistify user using ssh.
+    ...
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    ...	NOTE: This uses the running ssh session to run ssh to login to the
+    ...	node and therefore does not require switching ssh sessions.
+    [Arguments]	${_user}  ${_node}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_uuid}=  Get Node UUID  ${_node}
+    ${_c}=  catenate
+    ...  ssh ${ssh_options}
+    ...  ${_user}@${_ip}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Should Contain  ${_o}  ${_user}@${_uuid}
+    Should Not Contain  ${_o}  Permission denied
+
+Copy File As User To Node
+    [Documentation]  Copy a file as a non-mistify user to a node using scp.
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    [Arguments]  ${_user}  ${_node}  ${_source}  ${_destination}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_c}=  catenate
+    ...  scp ${ssh_options}
+    ...  ${_source}  ${_user}@${_ip}:${_destination}
+    Log To Console  \nRunning: ${_c}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Should Not Contain  ${_o}  No such file or directory
+    Should Not Contain  ${_o}  Is a directory
+    Should Not Contain  ${_o}  Permission denied
+
+Copy Directory As User To Node
+    [Documentation]  Copy a directory as a non-mistify user to a node using scp.
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    [Arguments]  ${_user}  ${_node}  ${_source}  ${_destination}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_c}=  catenate
+    ...  scp ${ssh_options} -r
+    ...  ${_source}  ${_user}@${_ip}:${_destination}
+    Log To Console  \nRunning: ${_c}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Should Not Contain  ${_o}  No such file or directory
+    Should Not Contain  ${_o}  Is a directory
+    Should Not Contain  ${_o}  Permission denied
+
+Run Command As User On Node
+    [Documentation]	This uses ssh to run a command as a non-mistify user on
+    ...  the node and then return the output.
+    ...	NOTE: The user needs to be setup for no password login. This can be
+    ...	either a null password or using preshared keys.
+    [Arguments]	${_user}  ${_node}  ${_command}
+    ${_ip}=  Get Node IP Address  ${_node}
+    ${_c}=  catenate
+    ...  ssh ${ssh_options}
+    ...  ${_user}@${_ip} ${_command}
+    Log To Console  \nRunning: ${_c}
+    ${_o}=  SSH Run And Get Output  ${_c}
+    Log To Console  Result: ${_o}
+    Should Not Contain  ${_o}  Permission denied
+    [Return]  ${_o}
+
 Reboot Node
     [Documentation]	Reboot a node. It's assumed already logged in.
     ...	This waits until the node has booted.
-    [Arguments]  ${_n}
-    Log To Console  Rebooting node: ${_n}
-    Attach Screen  ${_n}
+    [Arguments]  ${_node}
+    Log To Console  Rebooting node: ${_node}
+    Attach Screen  ${_node}
     ssh.Write  reboot
     ssh.Set Client Configuration  timeout=4m
     ${_o}=  ssh.Read Until  random: nonblocking
@@ -126,10 +219,10 @@ Shutdown Node
     [Documentation]	Shutdown a node's VM and wait for it to shutdown.
     ...	This waits until the node has booted.
 
-    [Arguments]  ${_n}
+    [Arguments]  ${_node}
 
-    Log To Console  Shutting down VM for node: ${_n}
-    Attach Screen  ${_n}
+    Log To Console  Shutting down VM for node: ${_node}
+    Attach Screen  ${_node}
     Exit VM In Screen
     ssh.Set Client Configuration  timeout=15s
     ssh.Read Until  QEMU: Terminated
@@ -141,12 +234,12 @@ Start Node
     ...			created by ClusterInitialization.robot.
     ...	This waits until the node has booted.
 
-    [Arguments]  ${_n}
-    Log To Console  Starting VM for node: ${_n}
-    Attach Screen  ${_n}
+    [Arguments]  ${_node}
+    Log To Console  Starting VM for node: ${_node}
+    Attach Screen  ${_node}
 
-    ssh.Write  ~/tmp/start-${_n}
-    Log To Console  \nWaiting for node ${_n} to boot.
+    ssh.Write  ~/tmp/start-${_node}
+    Log To Console  \nWaiting for node ${_node} to boot.
     # This is emitted some time after a boot (typically 30 to 40 seconds)
     # Wait until this occurs to avoid having it mess up normal output.
     ssh.Set Client Configuration  timeout=4m
@@ -164,27 +257,65 @@ Restart Node
     ...			by ClusterInitialization.robot.
     ...	This waits until the node has booted.
 
-    [Arguments]  ${_n}
+    [Arguments]  ${_node}
 
-    Log To Console  Restarting VM for node: ${_n}
-    Shutdown Node  ${_n}
-    ${_o}=  Start Node  ${_n}
+    Log To Console  Restarting VM for node: ${_node}
+    Shutdown Node  ${_node}
+    ${_o}=  Start Node  ${_node}
     [Return]  ${_o}
 
+Restart Node With New MAC Address
+    [Documentation]  This restarts a node and saves the disk image as the
+    ...  initial disk image and is intended to be used once after a node
+    ...  has been brought to a desired state. This helps return a node to
+    ...  the known state at a later time.
+    [Arguments]  ${_node}  ${_uuid}  ${_mac}  ${_ramdisksize}=200000
+    # Be sure the disk image is updated.
+    Use Node  ${_node}
+    ssh.Set Client Configuration  timeout=5s
+    SSH Run  sync; echo "File System sync'd"
+    Exit VM In Screen
+    ssh.Set Client Configuration  timeout=15s
+    ssh.Read Until  QEMU: Terminated
+    # Generate a quick start script for the node.
+    ${_c}=  catenate  SEPARATOR=${SPACE}
+    ...  ${TESTLIBDIR}/scripts/start-vm
+    ...  --diskimage ~/images/${_node}.img --tap ${_node}
+    ...  --uuid ${_uuid}
+    ...  --mac ${_mac}
+    ...  --ramdisksize ${_ramdisksize}
+    Log To Console  Generating node start script for node: ${_node}
+    ssh.Write  mkdir -p ~/tmp; echo ${_c} >~/tmp/start-${_node}
+    ssh.Write  chmod +x ~/tmp/start-${_node}
+    Log To Console  Saving initial disk image for node: ${_node}
+    ssh.Write  cp ~/images/${_node}.img ~/images/${_n}.img.initial
+    Log To Console  Restarting VM: ${_c}
+    ssh.Write  ${_c}
+    ssh.Set Client Configuration  timeout=4m
+    ssh.Read Until  random: nonblocking
+    ssh.Set Client Configuration  timeout=3s
+    Release Node
+
 Reset Node
-    [Documentation]	Reset a node by shutting down the node's VM and
-    ...			restart the VM using the node's initial disk image and
-    ...			startup script created by ClusterInitialization.robot.
-    ...	This waits until the node has booted.
+    [Documentation]  Reset a node by shutting down the node's VM and
+    ...  restart the VM using the node's either a new disk image
+    ...  initial disk image or a new disk image and the startup script created
+    ...  by ClusterInitialization.robot.
+    ...  The argument "_diskimage" controls which disk image is used.
+    ...    same (default)  Uses the same disk image.
+    ...    clean           Uses a new disk image.
+    ...    initial         Uses the disk image from when the node was first
+    ...                    started.
+    ...  This waits until the node has booted.
 
-    [Arguments]  ${_n}
+    [Arguments]  ${_node}  ${_diskimage}=same
 
-    Log To Console  Resetting VM for node: ${_n}
-    Shutdown Node  ${_n}
-    Attach Screen  ${_n}
-    ssh.Write  cp ~/images/${_n}.img.initial ~/images/${_n}.img
-    Detach Screen
-    ${_o}=  Start Node  ${_n}
+    Log Message  Resetting VM for node: ${_node}
+    Shutdown Node  ${_node}
+    Log Message  Using ${_diskimage} disk image.
+    Run Keyword If  '${_diskimage}'=='clean'  ssh.Write  rm ~/images/${_node}.img
+    Run Keyword If  '${_diskimage}'=='initial'  ssh.Write  cp ~/images/${_node}.img.initial ~/images/${_node}.img
+    ${_o}=  Start Node  ${_node}
     [Return]  ${_o}
 
 Reset All Nodes
@@ -275,13 +406,13 @@ Use Node
     ...
     ...  The variable ${node} is set to the node being used.
     ...
-    ...  This optionally resets the node if ${_ts_setup} equals "reset".
-    [Arguments]  ${_node}  ${_ts_setup}=none
+    ...  This optionally resets the node if "_setup" equals "reset".
+    [Arguments]  ${_node}  ${_setup}=none
     Set Suite Variable  ${node}  ${_node}
     Log To Console  Using node: ${node}
-    Run Keyword If  '${_ts_setup}'=='reset'  Reset Node  ${node}
+    Run Keyword If  '${_setup}'=='reset'  Reset Node  ${node}  initial
     Attach Screen  ${node}
-    Run Keyword If  '${_ts_setup}'=='reset'  Login To Mistify
+    Run Keyword If  '${_setup}'=='reset'  Login To Mistify
     SSH Run  \n\n
 
 Release Node

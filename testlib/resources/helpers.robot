@@ -19,13 +19,14 @@ Get Command Line Options
     ...        reset = Reset to initial states for a test run.
     ...                Refer to other tests scripts to determine what actually
     ...                happens when this is used.
-    ...    IMAGEDIR Where images to be tested are located. e.g. This is used
+    ...    IMAGESDIR Where images to be tested are located. e.g. This is used
     ...             to indicate where the Mistify-OS kernel and initrd images
     ...             are located.
     ${ts_setup}=  Get Variable Value  ${SETUP}  none
-    Set Suite Variable  ${ts_setup}
+    Set Global Variable  ${ts_setup}
     Log Message  Option ts_setup = ${ts_setup}
-    ${ts_imagedir}=  Get Variable Value  ${IMAGEDIR}  none
+    ${ts_imagedir}=  Get Variable Value  ${IMAGESDIR}  ${BUILDDIR}/images
+    Set Global Variable  ${ts_imagedir}
     Log Message  Option ts_imagedir = ${ts_imagedir}
 
 Log Output
@@ -33,8 +34,9 @@ Log Output
     ...  the pattern "++++" at the start and "----" at the end. The output is
     ...  also sent to the console.
     [Arguments]  ${_output}
-    ${_e}=  Evaluate  chr(int(0x1b))
-    ${_o}=  Replace String  ${_output}  ${_e}  ESC
+    # Escape sequences only clutter the output. Remove them.
+    ${_o}=  Remove String Using Regexp  ${_output}
+    ...  \\x1b\\[([0-9,A-Z]{1,2}(;[0-9]{1,2})?(;[0-9]{3})?)?[m|K]?
     Log  \nConsole output: \n++++\n${_o}\n----  console=true
 
 Log Message
@@ -46,12 +48,16 @@ SSH Run
     [Documentation]	This runs a command using an active ssh session and
     ...			ignores the output.
     ...
-    ...	The output is accumulated at .5 second intervals until no more output
-    ...	or a timeout occurs.
-    [Arguments]	${_command}
+    ...  The output is accumulated at .5 second intervals until no more output
+    ...  or a timeout occurs. This can be overriden.  If the ${_option} parameter
+    ...  is equal to "return" then this keyword immediately returns and doesn't
+    ...  consume any of the output.
+    [Arguments]	${_command}  ${_option}=none  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
+    Return From Keyword If  '${_option}' == 'return'  none
     # Consume all the output.
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
 
 SSH Run And Get Output
@@ -60,9 +66,10 @@ SSH Run And Get Output
     ...
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
-    [Arguments]	${_command}
+    [Arguments]	${_command}  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
     [Return]  ${_o}
 
@@ -72,9 +79,10 @@ SSH Run And Get First Line
     ...
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
-    [Arguments]	${_command}
+    [Arguments]	${_command}  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
     ${_l}=  Get Line  ${_o}  1
     [Return]  ${_l}
@@ -96,11 +104,12 @@ SSH Run And Get Return Code
     ...
     ...	The output is accumulated at .5 second intervals until no more output
     ...	or a timeout occurs.
-    [Arguments]	${_command}
+    [Arguments]	${_command}  ${_delay}=0.5s
+    Log Message  Delay is: ${_delay}
     ssh.Write  ${_command}
-    ssh.Read	delay=0.5s
+    ssh.Read	delay=${_delay}
     ssh.Write  echo RC=$?
-    ${_o}=  ssh.Read	delay=0.5s
+    ${_o}=  ssh.Read	delay=${_delay}
     Log Output  ${_o}
     ${_l}=  Get Lines Containing String  ${_o}  RC=
     # Ensure only the return code is used.
@@ -109,12 +118,27 @@ SSH Run And Get Return Code
     ${_r}=  Convert To Integer  ${_r}
     [Return]  ${_r}
 
+SSH Wait For Output
+    [Documentation]  Reads the ouput until the pattern is detected or a
+    ...  timeout occurs.
+    [Arguments]  ${_expected}
+    ${_o}=  ssh.Read Until  ${_expected}
+    [Return]  ${_o}
+
 Consume Console Output
     [Documentation]     This consumes and ignores all the console output so
     ...			the next step can have a console which is in sync.
-    ${_o}=  ssh.Read  delay=0.5s
+    [Arguments]  ${_delay}=0.5s
+    ${_o}=  ssh.Read  delay=${_delay}
     Log Output  ${_o}
     [Return]  ${_o}
+
+${_file} Should Exist
+    [Documentation]  Uses ls to verify a file exists.
+    Log Message  \nVerifying ${_file} exists.
+    ${_r}=  SSH Run And Get Return Code  ls ${_file}
+    Log Message  The return code is: ${_r}
+    Should Be Equal As Integers  ${_r}  ${0}
 
 ${_file} Should Contain ${_pattern}
     [Documentation]  Uses grep to scan a file for a given pattern and returns
@@ -123,6 +147,7 @@ ${_file} Should Contain ${_pattern}
     Log Message  \nSearching ${_file} for "${_pattern}"
     ${_l}=  SSH Run And Get Key Line  GREP:
     ...  grep '${_pattern}' ${_file}
+    Should Contain  ${_l}  ${_pattern}
 
 Files Should Be Same
     [Documentation]  Uses diff to compare two files and verify they are the

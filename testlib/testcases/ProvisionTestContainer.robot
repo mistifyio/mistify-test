@@ -14,7 +14,7 @@ Library		String
 # NOTE: The variable TESTLIBDIR is passed from the command line by the testmistify
 # script. There is no default value for this variable.
 #-
-Resource	${TESTLIBDIR}/resources/mistify.robot
+Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 

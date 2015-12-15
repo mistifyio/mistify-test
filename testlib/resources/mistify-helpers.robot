@@ -127,8 +127,8 @@ Update Mistify Images
 
     Log Message  Updating Mistify Images
     SSH Run  cd ~
-    ssh.Put File  ${IMAGEDIR}/${MISTIFY_KERNEL_IMAGE}  images/
-    ssh.Put File  ${IMAGEDIR}/${MISTIFY_INITRD_IMAGE}  images/
+    ssh.Put File  ${ts_imagedir}/${MISTIFY_KERNEL_IMAGE}  images/
+    ssh.Put File  ${ts_imagedir}/${MISTIFY_INITRD_IMAGE}  images/
     ${_o}=  SSH Run And Get Output  ls -l images
     Log Message  Mistify Images:\n${_o}
     Should Contain  ${_o}  ${MISTIFY_KERNEL_IMAGE}

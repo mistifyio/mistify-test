@@ -11,7 +11,7 @@ Library		String
 # NOTE: The variable TESTLIBDIR is passed from the command line by the testmistify
 # script. There is no default value for this variable.
 #-
-Resource	${TESTLIBDIR}/resources/mistify.robot
+Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 
@@ -152,15 +152,19 @@ Start The Build
     ${_o}=	ssh.Read Until  ${prompt}
     Should Contain  ${_o}  buildmistify
     ${_c}=	catenate
-    ...	./buildmistify -d ${builddownloaddir} --resetmasters
-    ...	--buildrootversion ${BUILDROOTVERSION}
-    ...	--toolchainversion ${TOOLCHAINVERSION}
-    ...	--gotag ${GOVERSION}
+    ...  ./buildmistify -d ${builddownloaddir} --resetmasters
+    ...  --buildrootversion ${BUILDROOTVERSION}
+    ...  --toolchainversion ${TOOLCHAINVERSION}
+    ...  --toochaindir ../toolchains
+    ...  --gotag ${GOVERSION}
+    ...  --godir ../toolchains/go
+    ...  --variant ${MISTIFYOSVARIANT}
     Log To Console  \nCommand is: ${_c}
     ssh.Write	${_c}
 
-Build Tools
-    [Documentation]	Build the cross tools and go compiler.
+Monitor The Toolchain Build
+    [Documentation]  The cross compiler toolchain and go compiler are built
+    ...  first. Verify they are being built.
     ssh.Set Client Configuration  timeout=20m
     :FOR  ${_checkpoint}  IN  @{checkpoints}
     	\  Log To Console  \nWaiting for: ${_checkpoint}
@@ -171,13 +175,18 @@ Build Tools
     ${_l}=	Get Lines Containing String  ${_o}  Logging the build output to
     Log To Console  \n${_l}
 
-Monitor The Build
+Monitor The Mistify-OS Build
+    [Documentation]  This monitors the output from buildroot during the build.
+    ...  Because the order in which packages are built is determined by
+    ...  dependencies it's not possible to look for specific patterns
+    ...  in sequence. Instead, this simply loops until the buildmistify script
+    ...  indicates the build has completed.
     Set Test Variable  ${_t}	1	# Iteration time.
-    Set Test Variable  ${_m}	180	# Maximum time to build even on a slow machine.
+    Set Test Variable  ${_m}	600	# Maximum time to build even on a slow machine.
     ssh.Set Client Configuration  timeout=${_t}m
     ssh.Read Until  make: Entering directory
     Log To Console  \n
-    # In absence of a while loop using a really big range.
+    # In absence of a while loop this uses a really big range.
     # Also can't reliably do checkpoints because the build sequence depends
     # upon the package dependencies.
     :FOR  ${_i}  IN RANGE  ${_m}
@@ -188,39 +197,50 @@ Monitor The Build
     	\  Exit For Loop If  '${_s}' == 'PASS'
     	\  ${_l}=  Get Lines Containing String  ${_o}  : Entering directory
     	\  Log To Console  ${_l}
+    Log Message  Build has finished.
     ssh.Read Until  ${prompt}
     ssh.Set Client Configuration  timeout=3s
 
 Verify Target Directory
-    ${_d}=  Set Variable  ${mistifybuilddir}/${MISTIFY_CLONE_DIR}/build/mistify/base/target
-    Log To Console  \nEntering: ${_d}
+    [Documentation]  buildroot populates a directory named, target,
+    ...  which contains what becomes the initrd. Verify this directory exists
+    ...  following a build. This changes to the target directory for the
+    ...  subsequent test cases.
+    ${_d}=  Set Variable  ${mistifybuilddir}/${MISTIFY_CLONE_DIR}/build/mistify/${MISTIFYOSVARIANT}/target
+    Log Message  \nEntering: ${_d}
     ssh.Write  cd ${_d}
     ${_o}=	ssh.Read Until  ${prompt}
     ssh.Write  pwd
     ${_o}=	ssh.Read Until  ${prompt}
     Log To Console  \n${_o}
-    Should Contain  ${_o}  /build/mistify/base/target
+    Should Contain  ${_o}  /build/mistify/${MISTIFYOSVARIANT}/target
 
 Verify The bin Files
+    [Documentation]  Verify files exist in the target/bin directory.
     Verify Files Exist  bin  @{target_bin_files}
 
 Verify The usr/bin Files
+    [Documentation]  Verify files exist in the target/usr/bin directory.
     Verify Files Exist  usr/bin  @{target_usr_bin_files}
 
 Verify The sbin Files
+    [Documentation]  Verify files exist in the target/sbin directory.
     Verify Files Exist  sbin  @{target_sbin_files}
 
 Verify The usr/sbin Files
+    [Documentation]  Verify files exist in the target/usr/sbin directory.
     Verify Files Exist  usr/sbin  @{target_usr_sbin_files}
 
 Verify The opt/mistify/sbin Files
+    [Documentation]  Verify files exist in the target/opt/mistify/sbin directory.
     Verify Files Exist  opt/mistify/sbin  @{target_opt_mistify_sbin_files}
 
 
 *** Keywords ***
 
 Verify Files Exist
-    [Documentation]  Using ls verify files exist in a directory.
+    [Documentation]  Using ls verify files exist in a directory relative to.
+    ...  the current directory.
 
     [Arguments]	${_path}  @{_files}
     Log To Console  \nChecking the ${_path} files.
@@ -248,4 +268,3 @@ Setup Testsuite
 Teardown Testsuite
     ssh.Close All Connections
     Stop Container	${containername}
-

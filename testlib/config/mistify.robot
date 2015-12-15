@@ -66,9 +66,10 @@ ${MISTIFY_DEFAULT_MAC}	de:ad:be:ef:02:0	# Last digit is appended when
 						# the VM is started.
 ${MISTIFY_VM_ETH_INTERFACE}	enp0s3
 
+### Testing a Cluster Running in VMs ###
 # Cluster nodes  -- NOTE: These need to end with an hex digit because they are
 # also used to construct MAC addresses.
-@{MISTIFY_CLUSTER_NODES}	node0  node1  node2
+@{MISTIFY_CLUSTER_NODES}	node0  node1
 ${MISTIFY_CLUSTER_NODE_BRIDGE}	br0
 ${MISTIFY_CLUSTER_SUBNET}	192.168.200
 ${MISTIFY_CLUSTER_GATEWAY_IP}	${MISTIFY_CLUSTER_SUBNET}.1
@@ -76,6 +77,44 @@ ${MISTIFY_CLUSTER_PRIMARY_IP}	${MISTIFY_CLUSTER_SUBNET}.200
 ${MISTIFY_CLUSTER_IP_LIST}	\n'${MISTIFY_CLUSTER_SUBNET}.200'\n'${MISTIFY_CLUSTER_SUBNET}.201'\n'${MISTIFY_CLUSTER_SUBNET}.202'
 ${MISTIFY_CLUSTER_NET_MASK_BITS}  24
 
+# Options for running the cluster-init script.
+${ETCD_HEARTBEAT_INTERVAL}	1000
+${ETCD_ELECTION_TIMEOUT}	10000
+
 # Helpers
+${MISTIFY_NODES_CONFIG_FILE}	nodes-config
 ${MISTIFY_JSON_PARSER}		parsejson
+
+### Using Mistify-OS to Build Mistify-OS ###
+@{MISTIFY_SDK_NODES}		sdk0
+${MISTIFY_SDK_SUBNET}		10.0.2
+${MISTIFY_SDK_GATEWAY_SUBNET}	10.0.3
+${MISTIFY_SDK_CONTAINER_IP}	${MISTIFY_SDK_SUBNET}.2
+${MISTIFY_SDK_GATEWAY_IP}	${MISTIFY_SDK_GATEWAY_SUBNET}.1
+${MISTIFY_SDK_PRIMARY_IP}	${MISTIFY_SDK_SUBNET}.100
+${MISTIFY_SDK_NET_MASK_BITS}	24
+${MISTIFY_SDK_HOST_IP}		${MISTIFY_SDK_GATEWAY_SUBNET}.1
+
+# To build Mistify-OS a really large disk is needed. This is enough to build
+# one variation.
+${MISTIFY_SDK_IMAGE_SIZE}	25G
+
+# In Mistify-OS the typical user IDs in the range 1000 are already taken.
+# This makes it impossible to match IDs. So use an arbitrary ID.
+${MISTIFY_SDK_USER_ID}		2000
+
+${MISTIFY_SDK_ROOT}		/mistify/sdk
+${MISTIFY_SDK_SYSROOT}		${MISTIFY_SDK_ROOT}/sysroot
+${MISTIFY_SDK_MEMORY}		6144
+${MISTIFY_SDK_RAMDISK_SIZE}	2000000
+
+#+
+# This has served its purpose and can now be removed.
+#-
+${MISTIFY_SEEDTOOLCHAIN}	crosstool-ng
+${MISTIFY_SEEDTOOLCHAIN_VERSION}  1.21.0
+${MISTIFY_SEEDTOOLCHAIN_FILE}	${MISTIFY_SEEDTOOLCHAIN}-${MISTIFY_SEEDTOOLCHAIN_VERSION}.tgz
+${MISTIFY_SEEDTOOLCHAIN_URL}	10.0.3.1:/builds/downloads
+${MISTIFY_SEEDTOOLCHAIN_SCP}	${MISTIFY_SDK_CONTAINER_IP}:~/http/toolchain
+${MISTIFY_SEEDTOOLCHAIN_PREFIX}	x86_64-unknown-linux-gnu
 

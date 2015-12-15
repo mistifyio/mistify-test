@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation	This script is designed to setup a test run for a newly completed
-...		build.
+...		build of the SDK variant of Mistify-OS.
 ...
 ...	If the command line parameter "SETUP" equals "reset" then
 ...	images are downloaded from the build server and	installed into
@@ -22,7 +22,7 @@ Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/ssh.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 
-Resource	${TESTLIBDIR}/resources/cluster-helpers.robot
+Resource	${TESTLIBDIR}/resources/node-helpers.robot
 
 Suite Teardown	Stop Tests If Failed
 
@@ -51,7 +51,7 @@ Node Interfaces Exist And Are Part Of Bridge
     [Documentation]  From the container perspective connection to each container
     ...  is via a TAP interface. These need to exist and be part of the cluster
     ...  brigdge before cluster verifications can be performed.
-    :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
+    :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
       \  ${_o}=  SSH Run And Get Key Line  LINE:  ip addr show dev ${_n}
       \  Should Contain  ${_o}  ${MISTIFY_BRIDGE}
 
@@ -78,7 +78,7 @@ The Screen Sessions Exist And Are Detached
     [Documentation]  Many of the test cases rely upon having a screen session
     ...  for each node. This verifies the screen sessions exist and are
     ...  detached.
-    :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
+    :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
       \  ${_o}=  SSH Run And Get Key Line  LINE:  screen -ls ${_n} \| grep ${_n}
       \  Should Contain  ${_o}  Detached
 
@@ -91,7 +91,7 @@ Restart Nodes Using New Images
     ...  new images. This is necessary in order to ensure everything is reset
     ...  to the Mistify-OS defaults for an initial boot.
     # Test cases assume already logged into the nodes.
-    :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
+    :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
       \  Reset Node  ${_n}  clean
       \  Use Node  ${_n}
       \  Login To Mistify
@@ -115,7 +115,7 @@ Generate The Node Attribute List
     ${_uuidlist}=  catenate  \nuuids=(
     ${_iplist}=  catenate  \ninitialips=(
     ${_maclist}=  catenate  \nmacs=(
-    :FOR  ${_n}  IN  @{MISTIFY_CLUSTER_NODES}
+    :FOR  ${_n}  IN  @{MISTIFY_SDK_NODES}
     \  ${_a}=  Get From Dictionary  ${Nodes}  ${_n}
     \  ${_uuid}=  Get From Dictionary  ${_a}  uuid
     \  ${_if}=  Get From Dictionary  ${_a}  if
@@ -155,23 +155,13 @@ Generate The Node Attribute List
     Set Suite Variable  ${NodesScript}
 
 Install Node Attribute List On The Primary Node
-    Use Node  @{MISTIFY_CLUSTER_NODES}[0]
+    Use Node  @{MISTIFY_SDK_NODES}[0]
     ${_of}=  catenate
     ...  cat >/root/${MISTIFY_NODES_CONFIG_FILE} << EOF\n
     ...  ${NodesScript}
     ...  \nEOF
     SSH Run  ${_of}
     Release Node
-
-Install Json Parser On The Primary Node
-    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]
-    ...  mkdir -p ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
-    Copy File To Node  @{MISTIFY_CLUSTER_NODES}[0]
-    ...  ${TESTLIBDIR}/scripts/${MISTIFY_JSON_PARSER}
-    ...  ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
-    ${_o}=  Run Command On Node  @{MISTIFY_CLUSTER_NODES}[0]
-    ...  ls ${MISTIFY_USER_HOME}/${MISTIFY_TEST_SCRIPTS_DIR}
-    ${_o}=  Should Contain  ${_o}  ${MISTIFY_JSON_PARSER}
 
 *** Keywords ***
 Stop Tests If Failed

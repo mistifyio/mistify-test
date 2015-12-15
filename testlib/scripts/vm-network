@@ -60,6 +60,9 @@ Usage: $0 [options]
     --maskbits <bits>
         The number of bits for the network mask.
         [maskbits = $maskbits]
+    --nameserver <ip>
+        The IP of the name server for the dhcpd to serve to VMs.
+        [nameserver=$nameserver]
     --shutdown
         Shutdown the interfaces and services created by this script.
     --shutdowndhcpd
@@ -128,6 +131,7 @@ tap:,\
 bridge:,\
 bridgeip:,\
 maskbits:,\
+nameserver:,\
 shutdown,\
 shutdowndhcpd,\
 resetdefaults,\
@@ -159,6 +163,10 @@ while [ $# -ge 1 ]; do
 	    ;;
 	--bridgeip)
 	    bridgeip=$2
+	    shift
+	    ;;
+	--nameserver)
+	    nameserver=$2
 	    shift
 	    ;;
 	--maskbits)
@@ -197,6 +205,7 @@ statevars=(
     tap\;tap0
     bridge\;mosbr0
     bridgeip\;10.0.2.2
+    nameserver\;10.0.3.1
     maskbits\;24
 )
 for v in "${statevars[@]}"
@@ -219,6 +228,7 @@ verbose TAP device is: $tap
 verbose Bridge device is: $bridge
 verbose Bridge IP address is: $bridgeip
 verbose Bridge device mask bits are: $maskbits
+verbose The name server is: $nameserver
 
 message Verifying tools.
 for t in tunctl ip dhcpd; do
@@ -336,6 +346,7 @@ if [ $? -gt 0 ]; then
     range $subnet.200 $subnet.240;
     option broadcast-address $subnet.255;
     option routers $subnet.2;
+    option domain-name-servers $nameserver;
     }
 EOF
     message DHCP configuration written to $dhcpdconf
