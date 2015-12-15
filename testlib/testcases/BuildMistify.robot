@@ -152,11 +152,13 @@ Start The Build
     ${_o}=	ssh.Read Until  ${prompt}
     Should Contain  ${_o}  buildmistify
     ${_c}=	catenate
-    ...	./buildmistify -d ${builddownloaddir} --resetmasters
-    ...	--buildrootversion ${BUILDROOTVERSION}
-    ...	--toolchainversion ${TOOLCHAINVERSION}
-    ...	--gotag ${GOVERSION}
-    ...	--variant ${MISTIFYOSVARIANT}
+    ...  ./buildmistify -d ${builddownloaddir} --resetmasters
+    ...  --buildrootversion ${BUILDROOTVERSION}
+    ...  --toolchainversion ${TOOLCHAINVERSION}
+    ...  --toochaindir ../toolchains
+    ...  --gotag ${GOVERSION}
+    ...  --godir ../toolchains/go
+    ...  --variant ${MISTIFYOSVARIANT}
     Log To Console  \nCommand is: ${_c}
     ssh.Write	${_c}
 
@@ -266,4 +268,3 @@ Setup Testsuite
 Teardown Testsuite
     ssh.Close All Connections
     Stop Container	${containername}
-
