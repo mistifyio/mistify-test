@@ -1,0 +1,94 @@
+---
+- name: Create default_user group
+  group: name={{default_user}} state=present
+
+- name: Create default_user_group
+  user:
+    name: "{{ default_user }}"
+    comment: "{{default_user}} user"
+    group: "{{default_user_group}}"
+    groups: "sudo"
+    home: "{{ default_user_home }}"
+    state: present
+
+- name: Add authorized_key to default_user
+  authorized_key: user="{{default_user}}" key="{{ lookup('file', "/var/lib/jenkins/.ssh/id_rsa.pub") }}" state=present manage_dir=yes
+
+- name: Copy ssh config
+  template: src=ssh_config dest="{{default_user_home}}/.ssh/config" owner="{{default_user}}" group="{{default_user_group}}"
+
+- name: Copy private ssh key
+  copy:
+    content: "{{ ubuntu_ssh_key }}"
+    dest: "{{default_user_home}}/.ssh/id_rsa"
+    mode: 0600
+    owner: "{{default_user}}"
+
+- name: Set permissions user home
+  file: path="{{default_user_home}}" owner="{{default_user}}" group="{{default_user_group}}" recurse=yes
+
+- name: Update apt repository
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: Install common packages
+  action: apt pkg={{item}} state=present
+  with_items:
+    - wget
+    - git
+    - curl
+    - python-httplib2
+    - apt-file
+    - software-properties-common
+    - qemu-kvm
+
+- name: Add default sudoers file
+  template:
+    src: sudoers.j2
+    dest: /etc/sudoers
+    owner: root
+    group: root
+    mode: 0440
+
+- name: Ensure /etc/sudoers.d exists
+  file:
+    path: /etc/sudoers.d
+    owner: root
+    group: root
+    mode: 0770
+    state: directory
+
+- name: Copy user sudoers file
+  template:
+    src: user_sudoers.j2
+    dest: /etc/sudoers.d/{{default_user}}_sudoers
+    owner: root
+    group: root
+    mode: 0440
+
+- name: Setup git config
+  template:
+    src: gitconfig.j2
+    dest: "{{default_user_home}}/.gitconfig"
+    owner: "{{default_user}}"
+    group: "{{default_user_group}}"
+  tags: git
+
+# - stat: path="{{default_user_home}}/.bashrc"
+#   register: p
+
+# - name: Create bashrc
+#   file: path="{{default_user_home}}/.bashrc" state=touch owner={{default_user}} group={{default_user_group}} mode=777
+#   when: p.stat.exists is defined and p.stat.exists
+
+- name: Edit bash.rc
+  blockinfile:
+    dest: "{{default_user_home}}/.bashrc"
+    insertafter: EOF
+    content: |
+      export EDITOR=vi
+      source /etc/environment
+
+- name: install linux linux-headers
+  action: shell apt-get install -y linux-headers-$(uname -r)
+  ignore_errors: True
+

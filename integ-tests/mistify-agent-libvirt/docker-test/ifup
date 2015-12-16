@@ -1,0 +1,13 @@
+#!/bin/sh
+set -x
+
+readonly switch=mistify0
+
+echo "args: $# $@"
+if [ -n "$1" ];then
+	ovs-vsctl add-port $switch $1
+        ip link set $1 up
+else
+        echo "Error: no interface specified"
+        exit 1
+fi

@@ -1,4 +1,0 @@
----
-default_user: ubuntu
-default_group: ubuntu
-default_user_home: /home/{{default_user}}

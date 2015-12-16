@@ -1,0 +1,27 @@
+---
+# - name: Configure openvswitch
+#   shell: |
+#   cd /tmp/openvswitch-{{openvswitch_version}}/openvswitch-{{openvswitch_version}}/
+#   touch /usr/local/etc/ovs-vswitchd.conf
+#   mkdir -p /usr/local/etc/openvswitch
+#   ovsdb-tool create /usr/local/etc/openvswitch/conf.db vswitchd/vswitch.ovsschema
+#   ovsdb-server /usr/local/etc/openvswitch/conf.db \
+#   --remote=punix:/usr/local/var/run/openvswitch/db.sock \
+#   --remote=db:Open_vSwitch,manager_options \
+#   --private-key=db:SSL,private_key \
+#   --certificate=db:SSL,certificate \
+#   --bootstrap-ca-cert=db:SSL,ca_cert --pidfile --detach --log-file
+#   ovs-vsctl --no-wait init
+#   ovs-vswitchd --pidfile --detach
+#   insmod datapath/linux/openvswitch.ko
+#   ovs-vsctl show
+#   tags:  openvswitch-configuration
+
+- name: Check if mistify bridge exists
+  shell: "ovs-vsctl list br mistify0"
+  register: ovsctl_bridge_list_result
+  ignore_errors: True
+
+- name: Add mistify bridge to openvswitch
+  shell: "ovs-vsctl add-br mistify0"
+  when: not ovsctl_bridge_list_result.rc == 0

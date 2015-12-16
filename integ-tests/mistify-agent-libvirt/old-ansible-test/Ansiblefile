@@ -2,7 +2,7 @@
 #^syntax detection
 site "https://galaxy.ansible.com/api/v1"
 
-role "openvswitch", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/openvswitch.git"
+role "openvswitch", "1.0.3", git: "git@gitlab.omniti.com:omniti-ansible/openvswitch.git"
 role "lxc", "1.0.0", git: "git@gitlab.omniti.com:omniti-ansible/lxc.git"
 role "geerlingguy.java"
 role "bobbyrenwick.pip"

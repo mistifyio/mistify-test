@@ -1,6 +1,10 @@
-lxc_user: "ubuntu"
-lxc_user_group: "ubuntu"
-lxc_user_home: "/home/ubuntu"
+lxc_user: "jenkins"
+lxc_user_group: "jenkins"
+lxc_user_home: "/var/lib/jenkins"
+
+lxc_logon_user: jenkins
+lxc_logon_user_group: jenkins
+lxc_logon_user_home: "/var/lib/jenkins"
 
 git_username: omniti-devops
 git_usermail: devops@omniti.com

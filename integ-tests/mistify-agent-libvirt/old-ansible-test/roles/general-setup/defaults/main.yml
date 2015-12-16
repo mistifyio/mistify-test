@@ -1,0 +1,5 @@
+---
+default_user: ubuntu
+default_user_group: ubuntu
+default_user_home: /home/{{default_user}}
+default_authorized_keys:
