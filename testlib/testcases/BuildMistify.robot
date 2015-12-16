@@ -30,25 +30,9 @@ ${builddownloaddir}=	${mistifybuilddir}/downloads
 ...	The Buildroot version is
 ...	Buildroot synced to
 ...	The kernel headers version is:
-...	Using toolchain variation:
-...	The toolchain version is
-...	Installing user-supplied crosstool-NG configuration
-...	Installing GMP for host: done
-...	Installing MPFR for host: done
-...	Installing ISL for host: done
-...	Installing CLooG for host: done
-...	Installing MPC for host: done
-...	Installing binutils for host: done
-...	Installing pass-1 core C gcc compiler: done
-...	Installing kernel headers: done
-...	Installing C library headers & start files: done
-...	Installing pass-2 core C gcc compiler: done
-...	Installing C library: done
-...	Installing final gcc compiler: done
-...	The go branch or tag is
-...	Building compilers and Go bootstrap tool for host, linux/amd64
-...	Building packages and commands for linux/amd64
-...	Installed Go for linux/amd64
+...	The toolchain variation directory is:
+...	The toolchain version is:
+...	The go branch or tag is:
 
 @{target_bin_files}=
 ...	systemctl
@@ -155,7 +139,7 @@ Start The Build
     ...  ./buildmistify -d ${builddownloaddir} --resetmasters
     ...  --buildrootversion ${BUILDROOTVERSION}
     ...  --toolchainversion ${TOOLCHAINVERSION}
-    ...  --toochaindir ../toolchains
+    ...  --toolchaindir ../toolchains
     ...  --gotag ${GOVERSION}
     ...  --godir ../toolchains/go
     ...  --variant ${MISTIFYOSVARIANT}
