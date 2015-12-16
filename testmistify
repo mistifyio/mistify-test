@@ -397,7 +397,7 @@ set_test_default mistifyosdir $mistifyosdir
 
 buildmistifystatedir=$mistifyosdir/.buildmistify
 
-init_test_variable mistifyosvariant\;base
+init_test_variable mistifyosvariant=base
 
 statevars=(
     mistifyosversion=$(get_mistifyos_version $mistifyosdir)
@@ -410,7 +410,7 @@ statevars=(
     buildrootversion=$(get_build_default $buildmistifystatedir \
             buildrootversion master)
     toolchainversion=$(get_build_default $buildmistifystatedir \
-            toolchainversion crosstool-ng-1.21.0)
+            toolchainversion glibc-multilib-sdk)
     goversion=$(get_build_default $buildmistifystatedir \
             gotag master)
     testlibdir=testlib
