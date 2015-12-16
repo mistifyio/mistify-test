@@ -149,7 +149,7 @@ Start The Build
 Monitor The Toolchain Build
     [Documentation]  The cross compiler toolchain and go compiler are built
     ...  first. Verify they are being built.
-    ssh.Set Client Configuration  timeout=20m
+    ssh.Set Client Configuration  timeout=45m
     :FOR  ${_checkpoint}  IN  @{checkpoints}
     	\  Log To Console  \nWaiting for: ${_checkpoint}
     	\  ${_o}=  ssh.Read Until  ${_checkpoint}
