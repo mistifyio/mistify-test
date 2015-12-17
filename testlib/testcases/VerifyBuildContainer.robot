@@ -14,7 +14,7 @@ Resource	${TESTLIBDIR}/config/mistify.robot
 Resource	${TESTLIBDIR}/resources/lxc.robot
 
 *** Variables ***
-${container}=	throwaway
+${container}=	throwaway${CONTAINER_ID}
 
 *** Test Cases ***
 Verify LXC is installed
