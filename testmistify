@@ -403,8 +403,13 @@ fi
 
 
 # Where buildmistify settings are maintained.
+if  [ "$mistifyosdir" == "default" ]; then
+    reset_test_default mistifyosdir
+    mistifyosdir=
+fi
+
 if [ -z "$mistifyosdir" ]; then
-    mistifyosdir=$(get_test_default mistifyosdir ../mistify-os)
+    mistifyosdir=$(get_test_default mistifyosdir $(full_path ../mistify-os))
 fi
 verbose Mistify-OS directory: $mistifyosdir
 set_test_default mistifyosdir $mistifyosdir
@@ -427,16 +432,16 @@ statevars=(
             toolchainversion glibc-multilib-sdk)
     goversion=$(get_build_default $buildmistifystatedir \
             gotag master)
-    testlibdir=testlib
-    testbeddir=testlib/testbeds
+    testlibdir=`readlink -m testlib`
+    testbeddir=`readlink -m testlib/testbeds`
     testbed=labrat.robot
-    testdistrodir=testlib/distros
+    testdistrodir=`readlink -m testlib/distros`
     testdistro=ubuntu-trusty-amd64.robot
     containerid=-test
-    testsuitedir=testlib/testsuites
+    testsuitedir=`readlink -m testlib/testsuites`
     testsuite=defaulttests
     setup=none
-    testlogdir=testlogs
+    testlogdir=`readlink -m testlogs`
     testlog=testmistify.log
     pythonpath=none
 )
