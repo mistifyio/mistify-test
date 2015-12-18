@@ -64,6 +64,17 @@ function get_build_default() {
     echo $r
 }
 
+function full_path() {
+    # Parameters:
+    #   1: The path to normalize. If the path equals "default" then "default"
+    #       is returned.
+    if [ "$1" == "default" ]; then
+        verbose Using default path.
+        echo default
+    else
+        echo `readlink -m $1`
+    fi
+}
 function clear_test_variable() {
     # Parameters:
     #   1: variable name and default value pair delimited by the delimeter (2)
@@ -96,8 +107,14 @@ function init_test_variable() {
     verbose State variable default: "${e[0]} = ${e[1]}"
     eval val=\$${e[0]}
     if [ -z "$val" ]; then
-        verbose Setting ${e[0]} to default: ${e[1]}
         eval ${e[0]}=$(get_test_default ${e[0]} ${e[1]})
+    else
+        if [ "$val" = "default" ]; then
+            verbose Setting ${e[0]} to default: ${e[1]}
+            eval ${e[0]}=${e[1]}
+        else
+            eval ${e[0]}=$val
+        fi
     fi
     eval val=\$${e[0]}
     verbose "State variable: ${e[0]} = $val"

@@ -159,6 +159,15 @@ Usage: $0 [options] [-- test suite options]
         which requires that a 0 return code always be returned after executing
         tests whether they fail or not. This is so the CI tool won't stop the
         run before the plugin has an opportunity to process the test results.
+    --pythonpath
+        Addional locatons where to search for test libraries. Multiple paths
+        can be given by separating them with a colon (':'). The given path can
+        also be a glob pattern matching multiple paths but then it normally
+        must be escaped or quoted. This option is passed directly to Robot
+        Framework (pybot).
+        This option is saved in the file:
+        $testmistifystatedir/pythonpath
+        [pythonpath=$pythonpath]
     -h|--help
         Display this usage.
 
@@ -252,6 +261,7 @@ resetdefaults,\
 verbose,\
 dryrun,\
 alwaysok,\
+pythonpath:,\
 help" \
    -o "h" -- "$@"`
 
@@ -274,7 +284,7 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --builddir)
-        builddir=$2
+        builddir=$(full_path $2)
         imagesdir=$builddir/images
         shift
         ;;
@@ -283,7 +293,7 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --downloaddir)
-        downloaddir=$2
+        downloaddir=$(full_path $2)
         shift
         ;;
     --mistifyosversion)
@@ -319,7 +329,7 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --testdistrodir)
-        testdistrodir=$2
+        testdistrodir=$(full_path $2)
         shift
         ;;
     --testdistro)
@@ -335,7 +345,7 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --testsuitedir)
-        testsuitedir=$2
+        testsuitedir=$(full_path $2)
         shift
         ;;
     --testcase)
@@ -354,7 +364,7 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --testlogdir)
-        testlogdir=$2
+        testlogdir=$(full_path $2)
         shift
         ;;
     --resetdefaults)
@@ -364,10 +374,14 @@ while [ $# -ge 1 ]; do
         verbose=y
         ;;
     --dryrun)
-        dryrun=echo
+        dryrun=verbose
         ;;
     --alwaysok)
         alwaysok=y
+        ;;
+    --pythonpath)
+        pythonpath=$(full_path $2)
+        shift
         ;;
     -h|--help)
         showusage=y
@@ -424,21 +438,23 @@ statevars=(
     setup=none
     testlogdir=testlogs
     testlog=testmistify.log
+    pythonpath=none
 )
 for v in "${statevars[@]}"
 do
     init_test_variable $v
 done
 
-which pybot
+verbose "Pybot is installed at: `which pybot`"
+
 if [ $? -gt 0 ]; then
     usage
     error Robot Framework is not installed.
     tip https://github.com/robotframework/robotframework/blob/master/INSTALL.rst
-    tip pip install robotframework
+    tip pip install --user robotframework
     tip Also install the SSH library:
     tip https://github.com/robotframework/SSHLibrary
-    tip pip install robotframework-sshlibrary
+    tip pip install --user robotframework-sshlibrary
     exit 1
 fi
 pip list | grep "robotframework-sshlibrary " >/dev/null
@@ -446,7 +462,7 @@ if [ $? -gt 0 ]; then
     usage
     error Robot Framework SSH library is not installed.
     tip https://github.com/robotframework/SSHLibrary
-    tip pip install robotframework-sshlibrary
+    tip pip install --user robotframework-sshlibrary
     exit 1
 fi
 
@@ -569,6 +585,10 @@ fi
 
 if [ -n "$exitonfailure" ]; then
     pybotoptions+=" --exitonfailure"
+fi
+
+if [[ "$pythonpath" != "none" ]]; then
+    pybotoptions+="  --pythonpath $pythonpath"
 fi
 
 log Setting MISTIFYOSDIR to $mistifyosdir
