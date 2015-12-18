@@ -280,7 +280,7 @@ while [ $# -ge 1 ]; do
         break
         ;;
     --mistifyosdir)
-        mistifyosdir=$2
+        mistifyosdir=$(full_path $2)
         shift
         ;;
     --builddir)
@@ -289,7 +289,7 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --imagesdir)
-        imagesdir=$2
+        imagesdir=$(full_path $2)
         shift
         ;;
     --downloaddir)
@@ -317,11 +317,11 @@ while [ $# -ge 1 ]; do
         shift
         ;;
     --testlibdir)
-        testlibdir=$2
+        testlibdir=$(full_path $2)
         shift
         ;;
     --testbeddir)
-        testbeddir=$2
+        testbeddir=$(full_path $2)
         shift
         ;;
     --testbed)
