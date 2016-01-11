@@ -54,44 +54,6 @@ Login To Container
     Set Suite Variable  ${homedir}
     Log To Console  Home directory is: ${homedir}
 
-Install Seed Toolchain
-    [Documentation]	If the toolchain tar file exists in the download directory
-    ...			then copy it to the container which will make it
-    ...			unnecessary to download the file there (next test).
-    SSH Run  mkdir -p ${httpserverdir}/${toolchaindir}
-    ${_s}  ${_o}=  Run Keyword And Ignore Error
-    ...  ssh.Put File  ${DOWNLOADDIR}/${MISTIFY_SEEDTOOLCHAIN_FILE}
-    ...    ${httpserverdir}/${toolchaindir}/
-    Run Keyword If  '${_s}' == 'PASS'
-    ...  Log Message  Image file ${MISTIFY_SEEDTOOLCHAIN_FILE} copied to container.
-
-Download Toolchain
-    [Documentation]	Download a prebuilt toolchain which was built using
-    ...  crosstools-ng. This toolchain is used to build a toolchain inside
-    ...  Mistify-OS which is then used to build Mistify-OS using a clone
-    ...  of mistify-os from the mistifyio repository.
-    ...
-    ...  NOTE: The download occurs only if the file doesn't exist.
-    SSH Run  cd ${httpserverdir}/${toolchaindir}
-    ${_o}=  SSH Run And Get Output  pwd
-    Log To Console  \nDownloading toolchain from:
-    ...  ${MISTIFY_SEEDTOOLCHAIN_URL}/${MISTIFY_SEEDTOOLCHAIN_FILE}
-    Log To Console  \nDownloading toolchain to: ${_o}
-    ${_c}=  catenate  SEPARATOR=${SPACE}
-    ...  if [ ! -f ${MISTIFY_SEEDTOOLCHAIN_FILE} ]; then
-    ...    wget ${MISTIFY_SEEDTOOLCHAIN_URL}/${MISTIFY_SEEDTOOLCHAIN_FILE};
-    ...  else
-    ...    echo "The toolchain file exists.";
-    ...  fi
-    ssh.Set Client Configuration  timeout=20m
-    ssh.Write  ${_c}
-    ssh.Read Until  ${userprompt}
-    ssh.Set Client Configuration  timeout=3s
-    Log To Console  ${_o}
-    SSH Run  cd ${homedir}
-    ${_o}=  SSH Run And Get Output  ls ${httpserverdir}/${toolchaindir}
-    Should Contain  ${_o}  ${MISTIFY_SEEDTOOLCHAIN_FILE}
-
 Copy Mistify Images To Container
     Update Mistify Images
 
@@ -164,7 +126,7 @@ Start The Nodes
       \  ...  --rammb ${MISTIFY_SDK_MEMORY}
       \  ...  --ramdisksize ${MISTIFY_SDK_RAMDISK_SIZE}
       \  ssh.Write  ${_c}
-      \  ssh.Read Until  random: nonblocking
+      \  ssh.Read Until  Welcome to Mistify-OS
       \  Detach Screen
     ssh.Set Client Configuration  timeout=3s
 
@@ -196,4 +158,3 @@ Setup Testsuite
 
 Teardown Testsuite
     Disconnect From SUT
-
