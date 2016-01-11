@@ -1,6 +1,6 @@
 *** Settings ***
 Documentation  This test suite is used to standup a container in which tests
-...  against a build of Mistify-OS can be run. This created the container and
+...  against a build of Mistify-OS can be run. This creates the container and
 ...  then initializes virtual machines running Mistify-OS. One virtual machine
 ...  per configured node is started. The container network is configured so that
 ...  the virtual machines can communicate with each other.
@@ -16,4 +16,3 @@ Record States
     [Documentation]     Record the variables and other settings for this suite.
     Get Command Line Options
     Log Variables
-
