@@ -75,6 +75,7 @@ function full_path() {
         echo `readlink -m $1`
     fi
 }
+
 function clear_test_variable() {
     # Parameters:
     #   1: variable name and default value pair delimited by the delimeter (2)
