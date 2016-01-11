@@ -202,11 +202,11 @@ while [ $# -ge 1 ]; do
 done
 
 statevars=(
-    tap\;tap0
-    bridge\;mosbr0
-    bridgeip\;10.0.2.2
-    nameserver\;10.0.3.1
-    maskbits\;24
+    tap=tap0
+    bridge=mosbr0
+    bridgeip=10.0.2.2
+    nameserver=10.0.3.1
+    maskbits=24
 )
 for v in "${statevars[@]}"
 do
@@ -376,5 +376,3 @@ fi
 
 message Network is now configured for running a VM.
 message Using the device $tap on the bridge $bridge.
-
-

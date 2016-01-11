@@ -126,7 +126,7 @@ tap:,\
 mac:,\
 pxeoptionrom:,\
 netboot,\
-rammb,\
+rammb:,\
 ramdisksize:,\
 resetdefaults,\
 verbose,\
@@ -217,18 +217,18 @@ while [ $# -ge 1 ]; do
 done
 
 statevars=(
-    mistifyimagedir\;images
-    kernelimage\;images/bzImage.mistify
-    initrdimage\;images/initrd.mistify
-    diskimage\;images/sas1.img
-    diskimagesize\;1G
-    uuid\;`uuidgen`
-    tap\;tap0
-    mac\;DE:AD:BE:EF:`printf "%02X:%02X" $(( (RANDOM % 256) )) $(( (RANDOM % 256) ))`
-    pxeoptionrom\;/usr/share/qemu/pxe-virtio.rom
-    netboot\;''
-    rammb\;2048
-    ramdisksize\;200000
+    mistifyimagedir=images
+    kernelimage=images/bzImage.mistify
+    initrdimage=images/initrd.mistify
+    diskimage=images/sas1.img
+    diskimagesize=1G
+    uuid=`uuidgen`
+    tap=tap0
+    mac=DE:AD:BE:EF:`printf "%02X:%02X" $(( (RANDOM % 256) )) $(( (RANDOM % 256) ))`
+    pxeoptionrom=/usr/share/qemu/pxe-virtio.rom
+    netboot=''
+    rammb=2048
+    ramdisksize=200000
 )
 for v in "${statevars[@]}"
 do
