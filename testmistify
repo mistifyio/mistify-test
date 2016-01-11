@@ -172,51 +172,51 @@ Usage: $0 [options] [-- test suite options]
         Display this usage.
 
     ==== Variables Passed On the Command Line ====
-    PWD = The current directory.
-    [$PWD]
-    USER = The current user as indicated in the \$USER environment variable.
-    [$USER]
-    HOME = The current user's home directory as indicated in the \$HOME
-        environment variable.
-    [$HOME]
-    MISTIFYOSDIR = The path to the clone of the "mistify-os" repo.
-    [$mistifyosdir]
-    MISTIFYOSVERSION = The active Mistify-OS version as reported by git.
-    [$mistifyosversion]
-    MISTIFYOSVARIANT = The variant of Mistify-OS to either build or test.
-    [$mistifyosvariant]
-    BUILDROOTVERSION = The version of buildroot to pass to the test suites. This
+    PWD - The current directory.
+    [PWD=$PWD]
+    USER - The current user as indicated in the \$USER environment variable.
+    [USER=$USER]
+    HOME - The current user\'s home directory as indicated in the \$HOME
+           environment variable.
+    [HOME=$HOME]
+    MISTIFYOSDIR - The path to the clone of the "mistify-os" repo.
+    [MISTIFYOSDIR=$mistifyosdir]
+    MISTIFYOSVERSION - The active Mistify-OS version as reported by git.
+    [MISTIFYOSVERSION=$mistifyosversion]
+    MISTIFYOSVARIANT - The variant of Mistify-OS to either build or test.
+    [MISTIFYOSVARIANT=$mistifyosvariant]
+    BUILDROOTVERSION - The version of buildroot to pass to the test suites. This
         is used to modify test case behavior based upon the version of Buildroot.
-    [$buildrootversion]
-    TOOLCHAINVERSION = The version of the toolchain to pass to the test suites.
+    [BUILDROOTVERSION=$buildrootversion]
+    TOOLCHAINVERSION - The version of the toolchain to pass to the test suites.
         This is used to modify test case behavior based upon the version of the
         toolchain used to build Mistify-OS.
-    [$toolchainversion]
-    GOVERSION = The version of Go to build. This is used to modify test case
+    [TOOLCHAINVERSION=$toolchainversion]
+    GOVERSION - The version of Go to build. This is used to modify test case
     behavior based upon the version of Go.
-    [$goversion]
-    BUILDDIR = The directory in which Mistify-OS was built. Test cases can use
+    [GOVERSION=$goversion]
+    BUILDDIR - The directory in which Mistify-OS was built. Test cases can use
         this to test against different builds of the Mistify-OS.
-    [$builddir]
-    IMAGESDIR = The directory where the Mistify-OS images are stored.
-    [$imagesdir]
-    SETUP = Test setup actions.
-    [$setup]
-    DOWNLOADDIR = The directory in which the Mistify-OS build downloads package
+    [BUILDDIR=$builddir]
+    IMAGESDIR - The directory where the Mistify-OS images are stored.
+    [IMAGESDIR=$imagesdir]
+    SETUP - Test setup actions.
+    [SETUP=$setup]
+    DOWNLOADDIR - The directory in which the Mistify-OS build downloads package
     source files. Test related downloads can reside here as well.
-    [$downloaddir]
-    TESTLIBDIR = The path to the test script library.
-    [$testlibdir]
-    TESTDISTRO = The path to the description of the Linux distribution used
+    [DOWNLOADDIR=$downloaddir]
+    TESTLIBDIR - The path to the test script library.
+    [TESTLIBDIR=$testlibdir]
+    TESTDISTRO - The path to the description of the Linux distribution used
         for container based testing. The test container is initialized using
         this distribution (see mistify.robot).
-    [$testdistro]
-    CONTAINER_ID = An ID which is appended to a container name to help ensure
+    [TESTDISTRO=$testdistro]
+    CONTAINER_ID - An ID which is appended to a container name to help ensure
         Containers based upon the same distro have unique names.
-    [$containerid]
-    TESTBED = The path to the file which describes the environment in which to
+    [CONTAINER_ID=$containerid]
+    TESTBED - The path to the file which describes the environment in which to
         test.
-    [$testbed]
+    [TESTBED=$testbed]
     These can be overridden on the command line using the "-v" option mentioned
     next.
 
@@ -603,7 +603,7 @@ log Setting BUILDROOTVERSION to $buildrootversion
 log Setting TOOLCHAINVERSION to $toolchainversion
 log Setting GOVERSION to $goversion
 log Setting BUILDDIR to $builddir
-log Setting IMAGESDIR to $builddir/images
+log Setting IMAGESDIR to $imagesdir
 log Setting DOWNLOADDIR to $downloaddir
 log Setting TESTLIBDIR to $testlibdir
 log Setting TESTDISTRO to $testdistrodir/$testdistro
@@ -622,7 +622,7 @@ pybotcommand="pybot $verboseoption -d $testlogdir \
     -v TOOLCHAINVERSION:$toolchainversion \
     -v GOVERSION:$goversion \
     -v BUILDDIR:$builddir \
-    -v IMAGESDIR:$builddir/images \
+    -v IMAGESDIR:$imagesdir \
     -v DOWNLOADDIR:$downloaddir \
     -v TESTLIBDIR:$testlibdir \
     -v TESTDISTRO:$testdistrodir/$testdistro \
