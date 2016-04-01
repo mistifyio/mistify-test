@@ -26,13 +26,13 @@ ${mistifybuilddir}=	~/build
 ${builddownloaddir}=	${mistifybuilddir}/downloads
 
 @{checkpoints}=
-...	Using Buildroot located at:
-...	The Buildroot version is
-...	Buildroot synced to
-...	The kernel headers version is:
 ...	The toolchain variation directory is:
-...	The toolchain version is:
-...	The go branch or tag is:
+...     The Go label is:
+...	Fetching Buildroot update from the remote repository
+...	Buildroot synced to:
+...	The kernel headers version is:
+...	Variant file is:
+...     buildmistify: Running make command:
 
 @{target_bin_files}=
 ...	systemctl
